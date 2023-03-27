@@ -83,6 +83,12 @@ class Wall(object):
             self.mesh.vertex_attribute(vertex, name='y', value=y_shift)
             self.mesh.vertex_attribute(vertex, name='x', value=x_shift)
 
+    
+    def zones(self, n):
+        for i, face in enumerate(self.mesh.faces()):
+            if n[i] > 0:
+                self.mesh.face_attribute(face, "tension", value=True)
+
 
     def numpy_test_function(self, value):
         from compas.rpc import Proxy
