@@ -86,8 +86,9 @@ class Wall(object):
     
     def zones(self, n):
         for i, face in enumerate(self.mesh.faces()):
+            self.mesh.face_attribute(face, "tension", value=False) # reseting everything
             if n[i] > 0:
-                self.mesh.face_attribute(face, "tension", value=True)
+                self.mesh.face_attribute(face, "tension", value=True) # if n positive => tension
 
 
     def numpy_test_function(self, value):
