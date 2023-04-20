@@ -22,5 +22,6 @@ Describe typical classes found in project
 
 from .sample_module import SampleClassName
 from .wall import Wall
+from .reachability_map import ReachabilityMap
 
-__all__ = ['SampleClassName', "Wall"]
+__all__ = ['SampleClassName', "Wall", "ReachabilityMap"]
