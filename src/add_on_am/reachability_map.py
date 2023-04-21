@@ -1,6 +1,6 @@
 from roslibpy import Ros, Topic
 
-from compas.geometry import Point, Frame, Quaternion, closest_point_in_cloud, Translation, distance_point_point
+from compas.geometry import Point, Frame, Quaternion, Translation, distance_point_point, KDTree
 from compas.data import Data
 
 class WsSphere(Data):
@@ -103,11 +103,14 @@ class ReachabilityMap(Data):
     def apply_surface(self, points, center):
         trans = Translation.from_vector(center)
         cloud = Point.transformed_collection(self.dict["points"], trans)
+        kd = KDTree(cloud)
         reachability_2D = []
+        indices = []
         for point in points:
-            dist, p, i = closest_point_in_cloud(point, cloud)
+            p, i, dist = kd.nearest_neighbor(point)
             reachability_2D.append(self.dict["reachability"][i])
-        return reachability_2D
+            indices.append(i)
+        return reachability_2D, indices
     
     def calc_radius(self):
         d = []
