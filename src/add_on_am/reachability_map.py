@@ -53,6 +53,7 @@ class ReachabilityMap(Data):
         self.header = header
         self.spheres = spheres
         self.resolution = resolution
+        self.points = [point for point, _ in self.spheres_data()]
     
     @property
     def data(self):
@@ -68,15 +69,12 @@ class ReachabilityMap(Data):
         self.header = data['header']
         self.spheres = [WsSphere.from_data(sphere) for sphere in data['spheres']]
         self.resolution = data['resolution']
-        self.dict = {
-            "points": [point for point, _ in self.spheres_data()],
-            "reachability": [ri for _, ri in self.spheres_data()],
-        }
 
     @classmethod
     def from_data(cls, data):
         rm = cls()
         rm.data = data
+        rm.points = [point for point, _ in rm.spheres_data()]
         return rm
 
     @classmethod
@@ -86,7 +84,9 @@ class ReachabilityMap(Data):
         for sphere in message["WsSpheres"]:
             spheres.append(WsSphere.from_message(sphere))
         res = message["resolution"]
-        return cls(hdr, spheres, res)
+        rm = cls(hdr, spheres, res)
+        rm.points = [point for point, _ in rm.spheres_data()]
+        return rm
 
     def update_from_message(self, message):
         self.header = message["header"]
@@ -94,30 +94,58 @@ class ReachabilityMap(Data):
         for sphere in message["WsSpheres"]:
             self.spheres.append(WsSphere.from_message(sphere))
         self.resolution = message["resolution"]
+        self.points = [point for point, _ in self.spheres_data()]
     
     def spheres_data(self):
         for sphere in self.spheres:
             yield sphere.point, sphere.ri
-
     
     def apply_surface(self, points, center):
         trans = Translation.from_vector(center)
-        cloud = Point.transformed_collection(self.dict["points"], trans)
+        cloud = Point.transformed_collection(self.points, trans)
         kd = KDTree(cloud)
         reachability_2D = []
         indices = []
         for point in points:
             p, i, dist = kd.nearest_neighbor(point)
-            reachability_2D.append(self.dict["reachability"][i])
+            reachability_2D.append(self.spheres[i].ri)
             indices.append(i)
         return reachability_2D, indices
     
     def calc_radius(self):
         d = []
-        for i, point in enumerate(self.dict["points"][:-1]):
-            d.append(distance_point_point(point, self.dict["points"][i+1]))
-        print(d)
+        for i, pointi in enumerate(self.points[:-1]):
+            if self.spheres[i].ri <= 10:
+                for j, pointj in enumerate(self.points[:-1]):
+                    if self.spheres[j].ri <= 10:
+                        d.append(distance_point_point(pointi, pointj))
         return max(d)/2
+    
+    def calc_radius_two(self):
+        d = []
+        for i, pointi in enumerate(self.points[:-1]):
+            d.append(distance_point_point(pointi, self.points[i+1]))
+        return max(d)/2
+    
+
+class ReachabilityMap2D:
+    def __init__(self, spheres=[], indices=[]):
+        self.spheres = spheres
+        self.indices = indices
+    
+    @classmethod
+    def from3d(cls, map3d, points, center):
+        rm = cls()
+        trans = Translation.from_vector(center)
+        cloud = Point.transformed_collection(map3d.points, trans)
+        kd = KDTree(cloud)
+        reachability_2D = []
+        for i, point in enumerate(points):
+            p, k, dist = kd.nearest_neighbor(point)
+            rm.spheres.append(map3d.spheres[k].copy())
+            rm.spheres[i].point = point
+            rm.indices.append(k)
+        return rm
 
 
 
