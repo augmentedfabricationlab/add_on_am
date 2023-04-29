@@ -1,6 +1,6 @@
 from roslibpy import Ros, Topic
 
-from compas.geometry import Point, Frame, Quaternion, Translation, distance_point_point, KDTree
+from compas.geometry import Point, Frame, Quaternion, Translation, distance_point_point, KDTree, angle_vectors
 from compas.data import Data
 
 class WsSphere(Data):
@@ -135,7 +135,7 @@ class ReachabilityMap2D:
     
     @classmethod
     def from3d(cls, map3d, points, center):
-        rm = cls()
+        rm = cls([], [])
         trans = Translation.from_vector(center)
         cloud = Point.transformed_collection(map3d.points, trans)
         kd = KDTree(cloud)
@@ -146,6 +146,20 @@ class ReachabilityMap2D:
             rm.spheres[i].point = point
             rm.indices.append(k)
         return rm
+    
+    def compare_planes(self, normals):
+        angles = []
+        closest_pose = []
+        for i, normal in enumerate(normals):
+            temp = []
+            for pose in self.spheres[i].poses:
+                temp.append(angle_vectors(normal, pose.normal))
+            temp_pose = self.spheres[i].poses[temp.index(min(temp))]
+            temp_pose.point = self.spheres[i].point
+            closest_pose.append(temp_pose)
+            angles.append(temp)
+        return angles, closest_pose
+
 
 
 
