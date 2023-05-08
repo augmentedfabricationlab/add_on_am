@@ -1,7 +1,10 @@
 from roslibpy import Ros, Topic
 
-from compas.geometry import Point, Frame, Quaternion, Translation, distance_point_point, KDTree, angle_vectors
+from compas.geometry import Point, Vector, Circle, Sphere, Cylinder, Plane, Frame, Quaternion, Translation, KDTree, distance_point_point, angle_vectors 
+from compas_rhino.conversions import polyline_to_compas, curve_to_compas_polyline
+from compas.datastructures import Mesh
 from compas.data import Data
+import math
 
 class WsSphere(Data):
     def __init__(self, header=None, point=None, ri=None, poses=None):
@@ -160,6 +163,123 @@ class ReachabilityMap2D:
             angles.append(temp)
         return angles, closest_pose
 
+
+class Envelope:
+    def __init__(self, r_out, h_out, r_in, h_in, z_offset, x=0, y=0, z=0, p=None):
+        self.r_out = r_out
+        self.h_out = h_out
+        self.r_in = r_in
+        self.h_in = h_in
+        self.z_offset = z_offset
+        
+        if p != None:
+            x = p.X
+            y = p.Y
+            z = p.Z
+        self.x = x
+        self.y = y
+        self.z = z
+        self.mesh_out = None
+    
+    def draw_mesh(self):
+        self.mesh_out = self.create_sphere_cylinder(self.r_out, self.h_out)
+        return self.mesh_out
+    
+    def point_inside(self, x, y, z):
+        condition1 = [z > self.h_out+self.z, z < self.z]
+        condition2 = {
+        "cylinder": (x-self.x)**2 + (y-self.y)**2 < self.r_out**2,
+        "upper circle": (x-self.x)**2 + (y-self.y)**2 + (z-self.h_out-self.z)**2 < self.r_out**2,
+        "lower circle": (x-self.x)**2 + (y-self.y)**2 + (z-self.z)**2 < self.r_out**2
+        }
+        outside_condition = ((not (condition1[0] or condition1[1])) and condition2["cylinder"]) or (condition1[0] and condition2["upper circle"]) or (condition1[1] and condition2["lower circle"])
+        
+        condition1 = [z-self.z_offset > self.h_in+self.z, z-self.z_offset < self.z]
+        condition2 = {
+        "cylinder": (x-self.x)**2 + (y-self.y)**2 > self.r_in**2,
+        "upper circle": (x-self.x)**2 + (y-self.y)**2 + (z-(self.h_in+self.z_offset)-self.z)**2 > self.r_in**2,
+        "lower circle": (x-self.x)**2 + (y-self.y)**2 + (z-self.z_offset-self.z)**2 > self.r_in**2
+        }
+        # inside_condition = ((not (condition1[0] or condition1[1])) and condition2["cylinder"]) or (condition1[0] and condition2["upper circle"]) or (condition1[1] and condition2["lower circle"])
+        if not (condition1[0] or condition1[1]):
+            inside_condition = condition2["cylinder"]
+        elif condition1[0]:
+            inside_condition = condition2["upper circle"]
+        elif condition1[1]:
+            inside_condition = condition2["lower circle"]
+        else:
+            inside_condition = False
+        
+        if inside_condition and outside_condition:
+            return True
+        return False
+
+    def crvs_inside(self, crvs, whole_crv=False):
+        crvs_in = []
+        crvs_out = []
+        for curve in crvs:
+            crv = polyline_to_compas(curve.ToPolyline())
+            if whole_crv:
+                inside = [self.point_inside(p.x, p.y, p.z) for p in crv.divide_by_length(0.05, False)]
+                print(inside[0])
+                print(inside)
+            else:
+                ps = crv.point(0.0)
+                pe = crv.point(1.0)
+                inside = [self.point_inside(ps.x, ps.y, ps.z), self.point_inside(pe.x, pe.y, pe.z)]
+            if all(inside):
+                crvs_in.append(curve)
+            else:
+                crvs_out.append(curve)
+        return crvs_in, crvs_out
+    
+    def faces_inside(self, mesh):
+        inside = []
+        for i, vertex in enumerate(mesh.Vertices):
+            if self.point_inside(vertex.X, vertex.Y, vertex.Z):
+                inside += mesh.Vertices.GetVertexFaces(i)
+        return mesh.DuplicateMesh().Faces.ExtractFaces(inside)
+
+
+        
+    # def create_mesh(self):
+    #     reach = self.create_sphere_cylinder(self.r_out, self.h_out)
+    #     deadzone = self.create_sphere_cylinder(self.r_in, self.h_in)
+    #     deadzone.Translate(0, 0, self.z_offset)
+    #     e = rg.Mesh()
+    #     e.Append([reach, deadzone])
+    #     e.Translate(self.x, self.y, self.z)
+    #     return e
+    
+    def create_sphere_cylinder(self, r, h):
+        pill = Mesh.from_shape(Sphere(Point(self.x, self.y, self.z), r))
+        to_delete = []
+        for face in pill.faces():
+            if pill.face_normal(face)[2] > 0:
+                to_delete.append(face)
+        for face in to_delete:
+            pill.delete_face(face)
+        
+        pill_two = Mesh.from_shape(Sphere(Point(self.x, self.y, self.z + h), r))
+        to_delete = []
+        for face in pill_two.faces():
+            if pill_two.face_normal(face)[2] < 0:
+                to_delete.append(face)
+        for face in to_delete:
+            pill_two.delete_face(face)
+
+        cyl = Mesh.from_shape(Cylinder(Circle(Plane(Point(self.x, self.y, self.z + h/2), Vector(0, 0, 1)), r), h))
+        to_delete = []
+        for face in cyl.faces():
+            if cyl.face_normal(face)[2] != 0:
+                to_delete.append(face)
+        for face in to_delete:
+            cyl.delete_face(face)
+
+
+        pill.join(pill_two)
+        pill.join(cyl)
+        return pill
 
 
 

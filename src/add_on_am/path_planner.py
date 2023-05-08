@@ -1,7 +1,8 @@
 import math
+import collections
 
 from compas.utilities import linspace
-from compas.datastructures import Network
+from compas.datastructures import Network, network_polylines
 from compas.geometry import Frame, Vector, Point, Translation, KDTree, angle_vectors, cross_vectors, distance_point_point, dot_vectors
 from compas_rhino.conversions import RhinoMesh
 from compas.colors import Color, ColorMap
@@ -156,14 +157,14 @@ class SurfacePathPlanner():
             'idx' : 0
         }
         attr_dict.update(kwargs)
-        print(attr_dict)
+        # print(attr_dict)
         conditions = {}
         func_dict = {0:min,1:max,2:sorted}
         func = func_dict[attr_dict['func']]
         for key, value in kwargs.items():
             if key in self.network.default_node_attributes.keys():
                 conditions.update({key:value})
-        print(conditions)
+       #  print(conditions)
         # if 'orientation' not in locals():
         #     orientation = None
         # if 'index' not in locals():
@@ -172,7 +173,7 @@ class SurfacePathPlanner():
         nodes = list(self.network.nodes_where(conditions))
         if nodes != []:
             vals = [self.network.node_attribute(key=k, name=attr_dict['orientation']) for k in nodes]
-            print(vals)
+            # print(vals)
             fval = func(vals)
             if isinstance(fval, list):
                 fval = fval[attr_dict['idx']]
@@ -180,6 +181,60 @@ class SurfacePathPlanner():
         else:
             # In case there are valid nodes, returns Nonetype
             return None
+    
+    def vertical_lines(self, orientation):
+        if self.mesh == None:
+            raise ValueError
+        if self.network == None:
+            self.set_network_nodes()
+
+        n = 0 # Number of interruptions    
+        p = 0    
+        current = self.get_node(number_of_neighbors=2, orientation=orientation, func=2, idx=0)
+        # Getting the starting point
+        lines = [[]]
+        # Path finding process
+        last = False
+        for index in self.mesh.faces():
+            # Look for the neighbor with the lowest x/y/z
+            self.network.path.append(current)
+            [x, y, z] = self.network.node_attributes(key=current, names=["x", "y", "z"])
+            lines[n].append(Point(x, y, z))
+            neighbornodes = {}
+            for i in self.network.node_attribute(key=current, name='neighbors'):
+                if len(self.network.connected_edges(key=i))==0:
+                    neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})
+            # If neighbors found then find the closest one based on orientation
+            if neighbornodes != {}:
+                if len(neighbornodes.keys())>2:
+                    k = neighbornodes.values().index(sorted(neighbornodes.values())[1])
+                else:
+                    k = neighbornodes.values().index(min(neighbornodes.values()))
+                following = neighbornodes.keys()[k]
+                # Draw a line between the current and following face centerpoints
+                if len(neighbornodes.keys()) != 1:
+                    self.network.add_edge(current, following)
+                elif 4.9749999 < neighbornodes.values()[0] < 4.975:
+                    if last:
+                        self.network.add_edge(current, following)
+                    last = True
+                else:
+                    lines.append([])
+                    n += 1
+                    # print(neighbornodes.values())
+            # If the face doesn't have free neighbors
+            else:
+                # But has remaining unconnected nodes
+                if self.network.number_of_nodes()-1 != self.network.number_of_edges():
+                    # Move to the closest available face centerpoint
+                    following = self.move_to_closest(current)
+                    if following == current:
+                        return self.network, n, network_polylines(self.network)
+                    # Draw a line between the current and the following face
+                    self.network.add_edge(current, following)
+                    n += 1
+            current = following
+        return self.network, n, network_polylines(self.network)
 
     def lowest_axis_path(self, orientation, alternate=False, inverse=False):
         """Creates a tool-path based on the given mesh topology.
