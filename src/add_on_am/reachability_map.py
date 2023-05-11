@@ -1,7 +1,6 @@
 from roslibpy import Ros, Topic
 
-from compas.geometry import Point, Vector, Circle, Sphere, Cylinder, Plane, Frame, Quaternion, Translation, KDTree, distance_point_point, angle_vectors 
-from compas_rhino.conversions import polyline_to_compas, curve_to_compas_polyline
+from compas.geometry import Point, Vector, Circle, Sphere, Cylinder, Plane, Frame, Quaternion, Translation, KDTree, distance_point_point, angle_vectors, normalize_vector_xy
 from compas.datastructures import Mesh
 from compas.data import Data
 import math
@@ -214,23 +213,23 @@ class Envelope:
             return True
         return False
 
-    def crvs_inside(self, crvs, whole_crv=False):
+    def crvs_inside(self, crvs, whole_crv=False, curve=False):
         crvs_in = []
         crvs_out = []
-        for curve in crvs:
-            crv = polyline_to_compas(curve.ToPolyline())
-            if whole_crv:
-                inside = [self.point_inside(p.x, p.y, p.z) for p in crv.divide_by_length(0.05, False)]
-                print(inside[0])
-                print(inside)
-            else:
-                ps = crv.point(0.0)
-                pe = crv.point(1.0)
-                inside = [self.point_inside(ps.x, ps.y, ps.z), self.point_inside(pe.x, pe.y, pe.z)]
+        for i, points in enumerate(crvs):
+            if curve:
+                points = points.divide_by_length(0.05, False)
+            if len(points) < 2:
+                break
+            ps = points.pop(0)
+            pe = points.pop(-1)
+            inside = [self.point_inside(ps.x, ps.y, ps.z), self.point_inside(pe.x, pe.y, pe.z)]
+            if whole_crv and all(inside):
+                inside = [self.point_inside(p.x, p.y, p.z) for p in points]
             if all(inside):
-                crvs_in.append(curve)
+                crvs_in.append(i)
             else:
-                crvs_out.append(curve)
+                crvs_out.append(i)
         return crvs_in, crvs_out
     
     def faces_inside(self, mesh):
@@ -240,7 +239,24 @@ class Envelope:
                 inside += mesh.Vertices.GetVertexFaces(i)
         return mesh.DuplicateMesh().Faces.ExtractFaces(inside)
 
-
+    def iterate(self, crvs, base_crv):
+        [params, base_points] = base_crv.divide_by_length(0.10, True)
+        curv = [[base_points[i], base_crv.curvature_at(param)] for i, param in enumerate(params)]
+        points = [c.divide_by_length(0.05, False) for c in crvs]
+        c = 0
+        max_in = [()]
+        for p, v in curv:
+            normalize_vector_xy(v)
+            self.x = p.x + v[0]
+            self.y = p.y + v[1]
+            ins, out = self.crvs_inside(points, True)
+            if len(ins) > c:
+                max_in = [(self.x, self.y)]
+                c = len(ins)
+            elif len(ins) == c:
+                max_in.append((self.x, self.y))
+        (self.x, self.y) = max_in[0]
+        return c, max_in
         
     # def create_mesh(self):
     #     reach = self.create_sphere_cylinder(self.r_out, self.h_out)
