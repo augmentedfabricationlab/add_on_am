@@ -172,3 +172,23 @@ class Map2d:
                     vertices.append(vertex)
                     self.network.node_attributes(node, ["ri", "vertices"], [ri, vertices])
 
+    def path_network(self, planner, envelope):
+        reach = {}
+        positions = self.network.nodes()
+        reachable_points = []
+        for node in planner.network.path:
+            reachable_pos = []
+            for pos in positions:
+                [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
+                [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
+                if envelope.point_inside(x, y, z):
+                    reachable_pos.append(pos)
+            if len(reachable_pos) == 0:
+                reach[positions[0]] = reachable_points
+                positions = self.network.nodes()
+                reachable_points = []
+            else:
+                positions = reachable_pos
+                reachable_points.append(node)
+        # result.append(positions)
+        return reach, positions
