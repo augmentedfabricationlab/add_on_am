@@ -3,6 +3,8 @@ import math
 from compas.datastructures import Mesh
 from compas.datastructures import Network
 from compas.geometry import Vector, Point, Translation, KDTree
+from collections import OrderedDict
+from operator import itemgetter
 
 
 class Wall(object):
@@ -172,23 +174,52 @@ class Map2d:
                     vertices.append(vertex)
                     self.network.node_attributes(node, ["ri", "vertices"], [ri, vertices])
 
-    def path_network(self, planner, envelope):
+
+    def pos_by_path(self, planner, envelope):
         reach = {}
         positions = self.network.nodes()
         reachable_points = []
         for node in planner.network.path:
             reachable_pos = []
+            # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
             for pos in positions:
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                 [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
                 if envelope.point_inside(x, y, z):
                     reachable_pos.append(pos)
             if len(reachable_pos) == 0:
+                # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
                 reach[positions[0]] = reachable_points
                 positions = self.network.nodes()
                 reachable_points = []
             else:
                 positions = reachable_pos
                 reachable_points.append(node)
-        # result.append(positions)
+        
+        # for some reason dicts cant be ordered as wanted and are always ordered by length of items, no idea who had this ingenius idea
+        # last value of list is choosen for last position, as least overlap with previous position???
+        reach[positions[-1]] = reachable_points
+
         return reach, positions
+    
+
+    def divide(self, planner, envelope):
+        reach, others = self.pos_by_path(planner, envelope)
+        positions = {}
+        for pos in reach.keys():
+            positions[pos] = []
+        
+        for node in planner.network.nodes():
+            [node_x, node_y] = planner.network.node_attributes(node, ["x", "y"])
+            distances = []
+            for pos in positions.keys():
+                [pos_x, pos_y] = self.network.node_attributes(pos, ["x", "y"])
+                distances.append((pos_x - node_x)**2 + (pos_y - node_y)**2)
+            closest_i = min(range(len(distances)), key=distances.__getitem__)
+            positions[positions.keys()[closest_i]].append(node)
+        
+        sorted_dict = sorted(positions.items(), key=itemgetter(0))
+        positions = OrderedDict(sorted_dict)
+
+        return positions, others
+
