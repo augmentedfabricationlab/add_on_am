@@ -3,6 +3,7 @@ from roslibpy import Ros, Topic
 from compas.geometry import Point, Vector, Circle, Sphere, Cylinder, Plane, Frame, Quaternion, Translation, KDTree, distance_point_point, angle_vectors, normalize_vector_xy
 from compas.datastructures import Mesh
 from compas.data import Data
+from statistics import mean
 import math
 
 class WsSphere(Data):
@@ -129,6 +130,23 @@ class ReachabilityMap(Data):
             d.append(distance_point_point(pointi, self.points[i+1]))
         return max(d)/2
     
+    def extend(self, h):
+        z_list = [p.z for p in self.points]
+        z_center = mean(z_list)
+        r = min(z_list) - z_center
+        new_spheres = []
+        for i, p in enumerate(self.points):
+            if z_center-0.01 < p.z < z_center+0.01:
+                for j in range(1, int(h/0.1)+1):
+                    sp = self.spheres[i].copy()
+                    sp.point.z += j*0.1
+                    new_spheres.append(sp)
+            elif p.z > z_center+0.05:
+                self.spheres[i].point.z += h
+        self.spheres += new_spheres
+        self.points = [point for point, _ in self.spheres_data()]
+        return r
+
 
 class ReachabilityMap2D:
     def __init__(self, spheres=[], indices=[]):

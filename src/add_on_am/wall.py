@@ -5,6 +5,7 @@ from compas.datastructures import Network
 from compas.geometry import Vector, Point, Translation, KDTree
 from collections import OrderedDict
 from operator import itemgetter
+from reachability_map import ReachabilityMap2D
 
 
 class Wall(object):
@@ -330,14 +331,16 @@ class Map2d_optimized(Map2d):
     
 
     # finding the ideal positions to print as much as possible of the continous path
-    def pos_by_path(self, planner, envelope):
+    def pos_by_path(self, planner, envelope, reachability_map):
         reach = {}
         positions = self.network.nodes()
         reachable_points = []
+        kd = KDTree(reachability_map.points)
         # run is used to skip the nodes after the optimization
         run = True
         last_node = None
         for node in planner.network.path:
+            print("node: ", node)
             if node == last_node:
                 run = True
                 continue
@@ -348,17 +351,22 @@ class Map2d_optimized(Map2d):
             for pos in positions:
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                 [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
-                if envelope.point_inside(x, y, z):
+                ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
+                if pos == 1:
+                    print("dist: ", (envelope.x-x)**2 + (envelope.y-y)**2, "ri: ", ri)
+                if envelope.point_inside(x, y, z) and ri > 10.0:
                     reachable_pos.append(pos)
             if len(reachable_pos) == 0:
-                ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[0], reachable_points)
+                # ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[0], reachable_points)
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
-                reach[ideal_pos] = reachable_points
-                print(reachable_points[-1], node)
-                if node != reachable_points[-1]:
-                    last_node = reachable_points[-1]
-                    run = False
-                positions = self.network.nodes()
+                reach[positions[0]] = reachable_points
+
+                # if node != reachable_points[-1]:
+                #     print("last node: ", last_node, reachable_points[-1])
+                #     last_node = reachable_points[-1]
+                #     run = False
+
+                positions = list(self.network.nodes())
                 reachable_points = []
             else:
                 positions = reachable_pos
@@ -372,3 +380,10 @@ class Map2d_optimized(Map2d):
         reach[positions[-1]] = reachable_points
 
         return reach, positions
+    
+    def reachability(self, reachability_map, kd, pos_x, pos_y, node_x, node_y, node_z):
+        # trans = Translation.from_vector(Vector(pos_x, pos_y, 0))
+        # cloud = Point.transformed_collection(reachability_map.points, trans)
+        # kd = KDTree(reachability_map.points)
+        p, k, dist = kd.nearest_neighbor(Point(node_x-pos_x, node_y-pos_y, node_z))
+        return reachability_map.spheres[k].ri

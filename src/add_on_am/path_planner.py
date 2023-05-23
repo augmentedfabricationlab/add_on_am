@@ -103,9 +103,9 @@ class SurfacePathPlanner():
         # if self.network.node_attribute(key=start, name='frame') is None:
         #     self.set_node_frame_from_edge(start, new_edge)
         # self.set_node_frame_from_edge(end, new_edge)
-        if self.network.node_attribute(key=start, name='frame') is None:
-            self.select_node_frame(start)
-        self.select_node_frame(end)
+        # if self.network.node_attribute(key=start, name='frame') is None:
+        #     self.select_node_frame(start)
+        # self.select_node_frame(end)
     
     def set_node_frame(self, node):
         norm = Vector.from_data(self.network.node_attributes(key=node, names=['vx','vy','vz']))
