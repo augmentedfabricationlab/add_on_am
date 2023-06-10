@@ -304,7 +304,7 @@ class Map2d_optimized(Map2d):
                     [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                     [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
                     ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
-                    if envelope.point_inside(x, y, z) and ri > 10.0:
+                    if envelope.point_inside(x, y, z) and ri > 10:
                         reachable_pos.append(pos)
             if len(reachable_pos) == 0:
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
@@ -332,11 +332,14 @@ class Map2d_optimized(Map2d):
     
 
     # finding the ideal positions to print as much as possible of the continous path
-    def pos_by_path(self, planner, envelope, reachability_map):
+    def pos_by_path(self, planner, envelope, reachability_map=None):
         reach = {}
         positions = self.network.nodes()
         reachable_points = []
-        kd = KDTree(reachability_map.points)
+        if reachability_map:
+            kd = KDTree(reachability_map.points)
+        else:
+            kd = None
         # run is used to skip the nodes after the optimization
         run = True
         last_node = None
@@ -353,7 +356,7 @@ class Map2d_optimized(Map2d):
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                 [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
                 ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
-                if envelope.point_inside(x, y, z) and ri > 10.0:
+                if envelope.point_inside(x, y, z) and ri > 10:
                     reachable_pos.append(pos)
             if len(reachable_pos) == 0:
                 ideal_pos, reachable_points = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points)
@@ -384,5 +387,8 @@ class Map2d_optimized(Map2d):
         # trans = Translation.from_vector(Vector(pos_x, pos_y, 0))
         # cloud = Point.transformed_collection(reachability_map.points, trans)
         # kd = KDTree(reachability_map.points)
-        p, k, dist = kd.nearest_neighbor(Point(node_x-pos_x, node_y-pos_y, node_z))
-        return reachability_map.spheres[k].ri
+        if reachability_map:
+            p, k, dist = kd.nearest_neighbor(Point(node_x-pos_x, node_y-pos_y, node_z))
+            return reachability_map.spheres[k].ri
+        else:
+            return 100
