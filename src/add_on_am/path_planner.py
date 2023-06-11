@@ -351,8 +351,8 @@ class SurfacePathPlanner():
 
         # layer height = 0.05 => total distances / 0.05 = number of layers
         avg_dist = (d_max_start + d_max_end) // 2
-        N = int(avg_dist / 0.05)
-        N = 2
+        N = int(avg_dist / 1.0)
+        # N = 2
         d_weight = [[] for _ in range(N)]
 
         # claculate the weighted distance for each line and each vertex
@@ -365,21 +365,53 @@ class SurfacePathPlanner():
 
         # calculate the locations of the zero crossings for each line
         zero_crossings = [[] for _ in range(N)]
-        isolines = Network(name="isolines", default_node_attributes={"x":0, "y":0, "z":0})
+        self.isolines = Network(name="isolines", default_node_attributes={"x":0, "y":0, "z":0})
+        k = 0
         for i, weight in enumerate(d_weight):
             for face in self.mesh.faces():
                 vertices = self.mesh.face_vertices(face)
                 dists = [weight[v] for v in vertices]
-                zero_crossings[i].extend(self.find_crossings(vertices, dists))
+                crossings = self.find_crossings(vertices, dists)
+                if crossings != []:
+                    zero_crossings[i].extend(crossings)
         
-            for i, crossing in enumerate(zero_crossings[i]):
-                isolines.add_node(x=crossing.x, y=crossing.y, z=crossing.z)
-                if i > 0:
-                    isolines.add_edge(i-1, i)
-
+            # if zero_crossings[i] != []:
+                # isolines, k = self.add_isoline(zero_crossings[i], k)
+        self.connect_isolines(self.mesh.vertex_coordinates(start), zero_crossings)
         heat_list = [d_weight, distances_start, distances_end]
 
-        return (start, end), heat_list, zero_crossings, isolines
+        return (start, end), heat_list, self.isolines
+
+
+    def connect_isolines(self, start, nodes):
+        index = 0
+        for i, isoline_nodes in enumerate(nodes):
+            if len(isoline_nodes) == 0:
+                print(index)
+                continue
+            kd = KDTree(isoline_nodes)
+            coord_prev_node, prev_node, d = kd.nearest_neighbor(start)
+            attr_dict = {
+                'x':coord_prev_node[0], 'y':coord_prev_node[1], 'z':coord_prev_node[2],
+            }
+            print(attr_dict)
+            self.isolines.add_node(key=index, attr_dict=attr_dict)
+            if index != 0:
+                self.isolines.add_edge(index-1, index)
+            index += 1
+            exclude_nodes = [prev_node]
+            while len(exclude_nodes) < len(isoline_nodes):
+                coord_node, node, d = kd.nearest_neighbor(coord_prev_node, exclude=exclude_nodes)
+                attr_dict = {
+                    'x':coord_node[0], 'y':coord_node[1], 'z':coord_node[2],
+                }
+                self.isolines.add_node(key=index, attr_dict=attr_dict)
+                self.isolines.add_edge(index-1, index)
+                index += 1
+                exclude_nodes.append(node)
+                coord_prev_node = coord_node
+                prev_node = node
+            start = coord_prev_node
 
 
     def find_crossings(self, vertices, dists):
@@ -391,11 +423,11 @@ class SurfacePathPlanner():
         #     continue
         if math.copysign(1, a) !=  math.copysign(1, b):
             zero_crossing.append(self.calculate_crossings(a, b, v_a, v_b))
-        if  math.copysign(1, b) !=  math.copysign(1, c):
+        if math.copysign(1, b) !=  math.copysign(1, c):
             zero_crossing.append(self.calculate_crossings(b, c, v_b, v_c))
-        if  math.copysign(1, c) !=  math.copysign(1, d):
+        if math.copysign(1, c) !=  math.copysign(1, d):
             zero_crossing.append(self.calculate_crossings(c, d, v_c, v_d))
-        if  math.copysign(1, d) !=  math.copysign(1, a):
+        if math.copysign(1, d) !=  math.copysign(1, a):
             zero_crossing.append(self.calculate_crossings(d, a, v_d, v_a))
         return zero_crossing
 
