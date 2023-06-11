@@ -23,6 +23,7 @@ Describe typical classes found in project
 from .sample_module import SampleClassName
 from .wall import Wall, Map2d, Map2d_optimized
 from .reachability_map import ReachabilityMap, ReachabilityMap2D, Envelope
-from path_planner import SurfacePathPlanner
+from .path_planner import SurfacePathPlanner
+from .heat_planner import HeatPathPlanner
 
-__all__ = ['SampleClassName', "Wall", "ReachabilityMap", "ReachabilityMap2D", "Envelope", "SurfacePathPlanner", "Map2d", "Map2d_optimized"]
+__all__ = ['SampleClassName', "Wall", "ReachabilityMap", "ReachabilityMap2D", "Envelope", "SurfacePathPlanner", "Map2d", "Map2d_optimized", "HeatPathPlanner"]
