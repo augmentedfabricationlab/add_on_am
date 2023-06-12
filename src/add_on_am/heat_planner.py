@@ -1,5 +1,5 @@
 import math
-
+from cart_sphe import to_spherical, shift_origin, distance
 
 from compas.datastructures import Network
 from compas.geometry import Vector, Point, KDTree, barycentric_coordinates
@@ -46,7 +46,7 @@ class HeatPathPlanner():
             for v in self.mesh.vertices():
                 if self.mesh.vertex_coordinates(v)[0] < 0.04:
                     start = v
-                    # break
+                    #break
             for v in self.mesh.vertices():
                 if length - 0.04 < self.mesh.vertex_coordinates(v)[0]:
                     end = v
@@ -84,7 +84,8 @@ class HeatPathPlanner():
                 if crossings != []:
                     zero_crossings[i].extend(crossings)
         
-        self.connect_isolines(self.mesh.vertex_coordinates(start), zero_crossings)
+        # self.connect_isolines(self.mesh.vertex_coordinates(start), zero_crossings)
+        self.isolines_spherical(self.mesh.vertex_coordinates(start), self.mesh.vertex_coordinates(end), zero_crossings)
         heat_list = [d_weight, distances_start, distances_end]
 
         return (start, end), heat_list, self.isolines
@@ -107,6 +108,35 @@ class HeatPathPlanner():
                 continue
             barycentric_coords = [barycentric_coordinates(start, triangle, node) for node in isoline_nodes]
 
+
+    def isolines_spherical(self, start, end, nodes):
+        index = 0
+        for i, isoline_nodes in enumerate(nodes):
+            if len(isoline_nodes) == 0:
+                print(index)
+                continue
+            # check which point is closer to the isoline
+            center = self.find_center(isoline_nodes)
+            if distance(start, center) < distance(end, center):
+                origin = start
+            else:
+                origin = end
+            # sort the points on the isoline according to their theta value (spherical coordinate) relative to the new origin
+            nodes_spherical = [to_spherical(*shift_origin(node.x, node.y, node.z, origin)) for node in isoline_nodes]
+            nodes_factor = [node[1] for node in nodes_spherical]
+            nodes_sorted = [node for _, node in sorted(zip(nodes_factor, isoline_nodes), key=lambda pair: pair[0])]
+            # reverse every second isoline to make sure the lines are connected in the right order
+            if i % 2 == 0:
+                nodes_sorted.reverse()
+            # add the nodes to the network and connect them
+            for node in nodes_sorted:
+                attr_dict = {
+                    'x':node[0], 'y':node[1], 'z':node[2],
+                }
+                self.isolines.add_node(key=index, attr_dict=attr_dict)
+                if index != 0:
+                    self.isolines.add_edge(index-1, index)
+                index += 1
 
 
     def connect_isolines(self, start, nodes):
