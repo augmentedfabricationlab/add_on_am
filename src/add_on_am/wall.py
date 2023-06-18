@@ -308,19 +308,25 @@ class Map2d_optimized(Map2d):
                         ri = self.linear_reach(envelope, x, y, z)
                     else:
                         ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
-                    if envelope.point_inside(x, y, z) and ri > 10:
+                    
+                    inside = envelope.point_inside(x, y, z)
+                    if inside and ri > 40:
                         reachable_pos.append(pos)
+                    elif inside and ri <= 40:
+                        if self.check_pose(node, reachability_map, kd, envelope):
+                            reachable_pos.append(pos)
+
             if len(reachable_pos) == 0:
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
-                return positions[0], reachable_points
+                return positions[0], reachable_pos
             else:
                 positions = reachable_pos
                 reachable_points.append(node)
-        return positions[-1], reachable_points
+        return positions[-1], reachable_pos
     
 
     # optimizing the position from a given position by adding a finder grid of positions around the given position
-    def optimize_pos(self, planner, envelope, reachability_map, kd, ideal_pos, reachable_points, loops=2):
+    def optimize_pos(self, planner, envelope, reachability_map, kd, ideal_pos, reachable_points, loops=3):
         for i in range(loops):
             if i > 0:
                 res = self.resolution/(i*3)
@@ -359,15 +365,22 @@ class Map2d_optimized(Map2d):
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                 [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
                 if ri_calc == "linear":
-                        ri = self.linear_reach(envelope, x, y, z)
+                    ri = self.linear_reach(envelope, x, y, z)
                 else:
                     ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
-                if envelope.point_inside(x, y, z) and ri > 10:
+                
+                inside = envelope.point_inside(x, y, z)
+                if inside and ri > 40:
                     reachable_pos.append(pos)
+                elif inside and ri <= 40:
+                    if self.check_pose(node, reachability_map, kd, envelope):
+                        reachable_pos.append(pos)
+
+
             if len(reachable_pos) == 0:
                 ideal_pos, reachable_points = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points)
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
-                reach[positions[0]] = reachable_points
+                reach[ideal_pos] = reachable_points
                 
                 # check if final node is reached
                 if planner.network.path.index(reachable_points[-1])+1 == len(planner.network.path):
@@ -392,11 +405,11 @@ class Map2d_optimized(Map2d):
 
         # optimization for last one not necessary as there is a whole envelope of points that works
         # ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[-1], reachable_points)
-        print(positions[-1], reachable_points)
         reach[positions[-1]] = reachable_points
 
         return reach, positions
     
+
     def reachability(self, reachability_map, kd, pos_x, pos_y, node_x, node_y, node_z):
         # trans = Translation.from_vector(Vector(pos_x, pos_y, 0))
         # cloud = Point.transformed_collection(reachability_map.points, trans)
@@ -407,6 +420,7 @@ class Map2d_optimized(Map2d):
         else:
             return 100
         
+
     def linear_reach(self, envelope, node_x, node_y, node_z):
         if node_z > envelope.h_out+envelope.z:
             d = math.sqrt((node_x-envelope.x)**2 + (node_y-envelope.y)**2 + (node_z-envelope.h_out-envelope.z)**2)
@@ -424,5 +438,18 @@ class Map2d_optimized(Map2d):
         elif d > 2*envelope.r_in:
             linear_in = 50
         return linear_out + linear_in
+    
+
+    def check_pose(self, node, reachability_map, kd, envelope):
+        normal = self.wall.mesh.vertex_normal(node)
+        node_x, node_y, node_z = self.wall.mesh.vertex_coordinates(node)
+        p, k, dist = kd.nearest_neighbor(Point(node_x-envelope.x, node_y-envelope.y, node_z))
+        poses = reachability_map.spheres[k].poses
+        for pose in poses:
+            # check if angle between normals is less than 20 degree
+            angle = pose.normal.angle(normal)*180/math.pi
+            if angle < 45:
+                return True
+        return False
         
         
