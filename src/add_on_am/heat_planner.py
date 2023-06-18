@@ -1,5 +1,5 @@
 import math
-from cart_sphe import to_spherical, shift_origin, distance
+from cart_sphe import magnitude, shift_origin, distance
 
 from compas.datastructures import Network
 from compas.geometry import Vector, Point, KDTree, barycentric_coordinates
@@ -15,7 +15,7 @@ class HeatPathPlanner():
         }
         self.fabrication_parameters = {
             'material_flowrate':500.0,          # l/hr
-            'thickness_range':[0.008, 0.022],     # m
+            'thickness_range':[0.01, 0.01],     # m [0.008, 0.022]
             'radius_range':[0.040, 0.075],        # m
             'distance_range':[0.100, 0.300],      # m
             'measured_radii':[0.0625, 0.075],        # [m]
@@ -39,6 +39,8 @@ class HeatPathPlanner():
     def heat_method(self, length, height, crv_length, direction="x"):
         if self.mesh == None:
             raise ValueError
+        if self.mesh.is_trimesh():
+            raise ValueError
         # identify the start and end vertices (for x: left / right edge) 
         start = []
         end = []
@@ -46,7 +48,7 @@ class HeatPathPlanner():
             for v in self.mesh.vertices():
                 if self.mesh.vertex_coordinates(v)[0] < 0.04:
                     start = v
-                    #break
+                    break
             for v in self.mesh.vertices():
                 if length - 0.04 < self.mesh.vertex_coordinates(v)[0]:
                     end = v
@@ -56,14 +58,20 @@ class HeatPathPlanner():
         distances_start = ds.mesh_geodesic_distances_numpy(self.mesh, start, m=1.0)
         distances_end = ds.mesh_geodesic_distances_numpy(self.mesh, end, m=1.0)
 
+        # not implemented in compas yet
+        # distances_start = trimesh_geodistance(self.mesh, start)
+        # distances_end = trimesh_geodistance(self.mesh, end)
+
+
         # find the geodesic distance between the start and end vertices
         d_max_start = distances_start[end]
         d_max_end = distances_end[start]
 
         # layer height = 0.05 => total distances / 0.05 = number of layers
+        avg_thickness = self.fabrication_parameters['thickness_range'][0] + self.fabrication_parameters['thickness_range'][1] / 2
         avg_dist = (d_max_start + d_max_end) // 2
-        N = int(avg_dist / 0.05)
-        # N = 2
+        N = int(avg_dist / avg_thickness)
+        #N = 100
         d_weight = [[] for _ in range(N)]
 
         # claculate the weighted distance for each line and each vertex
@@ -84,7 +92,6 @@ class HeatPathPlanner():
                 if crossings != []:
                     zero_crossings[i].extend(crossings)
         
-        # self.connect_isolines(self.mesh.vertex_coordinates(start), zero_crossings)
         self.isolines_spherical(self.mesh.vertex_coordinates(start), self.mesh.vertex_coordinates(end), zero_crossings)
         heat_list = [d_weight, distances_start, distances_end]
 
@@ -122,8 +129,7 @@ class HeatPathPlanner():
             else:
                 origin = end
             # sort the points on the isoline according to their theta value (spherical coordinate) relative to the new origin
-            nodes_spherical = [to_spherical(*shift_origin(node.x, node.y, node.z, origin)) for node in isoline_nodes]
-            nodes_factor = [node[1] for node in nodes_spherical]
+            nodes_factor = [self.spherical_factor(node.x, node.y, node.z, origin) for node in isoline_nodes]
             nodes_sorted = [node for _, node in sorted(zip(nodes_factor, isoline_nodes), key=lambda pair: pair[0])]
             # reverse every second isoline to make sure the lines are connected in the right order
             if i % 2 == 0:
@@ -137,6 +143,61 @@ class HeatPathPlanner():
                 if index != 0:
                     self.isolines.add_edge(index-1, index)
                 index += 1
+    
+
+    def spherical_factor(self, x, y, z, origin, result="theta"):
+        x, y, z = shift_origin(x, y, z, origin)
+        # calculate the spherical coordinate of the point relative to the new origin
+        if result == "theta":
+            if z > 0:
+                result = math.atan2(math.sqrt(x**2 + y**2), z)
+            elif z < 0:
+                result = math.pi + math.atan2(math.sqrt(x**2 + y**2), z)
+            elif z == 0 and x*y != 0:
+                result = math.pi / 2
+            else:
+                result = 0
+        elif result == "phi":
+            if x > 0:
+                result = math.atan2(y, x)
+            elif x < 0 and y >= 0:
+                result = math.pi + math.atan2(y, x)
+            elif x < 0 and y < 0:
+                result = -math.pi + math.atan2(y, x)
+            elif x == 0 and y > 0:
+                result = math.pi / 2
+            elif x == 0 and y < 0:
+                result = -math.pi / 2
+            else:
+                result = 0
+        elif result == "radius":
+            result = magnitude(x, y, z)
+        # return the theta value
+        return result
+
+
+    def find_crossings(self, vertices, dists):
+        [a, b, c, d] = dists
+        [v_a, v_b, v_c, v_d] = vertices
+        zero_crossing = []
+        # check for crossings and their location in between the circumference of the face
+        if math.copysign(1, a) !=  math.copysign(1, b):
+            zero_crossing.append(self.calculate_crossings(a, b, v_a, v_b))
+        if math.copysign(1, b) !=  math.copysign(1, c):
+            zero_crossing.append(self.calculate_crossings(b, c, v_b, v_c))
+        if math.copysign(1, c) !=  math.copysign(1, d):
+            zero_crossing.append(self.calculate_crossings(c, d, v_c, v_d))
+        if math.copysign(1, d) !=  math.copysign(1, a):
+            zero_crossing.append(self.calculate_crossings(d, a, v_d, v_a))
+        return zero_crossing
+
+    
+    def calculate_crossings(self, start, end, start_vertice, end_vertice):
+        # calculate the factor of the distance between the two vertices (0-1)
+        factor = -start / ((end-start))
+        vector = Vector.from_start_end(self.mesh.vertex_coordinates(start_vertice), self.mesh.vertex_coordinates(end_vertice))
+        [x, y, z] = self.mesh.vertex_coordinates(start_vertice)
+        return Point(x, y, z) + vector.scaled(factor)
 
 
     def connect_isolines(self, start, nodes):
@@ -178,27 +239,3 @@ class HeatPathPlanner():
                 prev_node = node
             # set the start point of the next isoline as the previous node
             start = coord_prev_node
-
-
-    def find_crossings(self, vertices, dists):
-        [a, b, c, d] = dists
-        [v_a, v_b, v_c, v_d] = vertices
-        zero_crossing = []
-        # check for crossings and their location in between the circumference of the face
-        if math.copysign(1, a) !=  math.copysign(1, b):
-            zero_crossing.append(self.calculate_crossings(a, b, v_a, v_b))
-        if math.copysign(1, b) !=  math.copysign(1, c):
-            zero_crossing.append(self.calculate_crossings(b, c, v_b, v_c))
-        if math.copysign(1, c) !=  math.copysign(1, d):
-            zero_crossing.append(self.calculate_crossings(c, d, v_c, v_d))
-        if math.copysign(1, d) !=  math.copysign(1, a):
-            zero_crossing.append(self.calculate_crossings(d, a, v_d, v_a))
-        return zero_crossing
-
-    
-    def calculate_crossings(self, start, end, start_vertice, end_vertice):
-        # calculate the factor of the distance between the two vertices (0-1)
-        factor = -start / ((end-start))
-        vector = Vector.from_start_end(self.mesh.vertex_coordinates(start_vertice), self.mesh.vertex_coordinates(end_vertice))
-        [x, y, z] = self.mesh.vertex_coordinates(start_vertice)
-        return Point(x, y, z) + vector.scaled(factor)

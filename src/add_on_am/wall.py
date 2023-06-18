@@ -6,6 +6,7 @@ from compas.geometry import Vector, Point, Translation, KDTree
 from collections import OrderedDict
 from operator import itemgetter
 from reachability_map import ReachabilityMap2D
+from cart_sphe import distance
 
 
 class Wall(object):
@@ -285,7 +286,7 @@ class Map2d_optimized(Map2d):
     
 
     # finding the the ideal position out of an envelope of positions from all positions and from a given starting node
-    def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, dist=None):
+    def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, dist=None, ri_calc="linear"):
         start_pos = self.length + 1
         self.add_to_network(current_pos, envelope, dist)
         positions = self.network.nodes()
@@ -303,7 +304,10 @@ class Map2d_optimized(Map2d):
                 if pos >= start_pos:
                     [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                     [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
-                    ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
+                    if ri_calc == "linear":
+                        ri = self.linear_reach(envelope, x, y, z)
+                    else:
+                        ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
                     if envelope.point_inside(x, y, z) and ri > 10:
                         reachable_pos.append(pos)
             if len(reachable_pos) == 0:
@@ -332,7 +336,7 @@ class Map2d_optimized(Map2d):
     
 
     # finding the ideal positions to print as much as possible of the continous path
-    def pos_by_path(self, planner, envelope, reachability_map=None):
+    def pos_by_path(self, planner, envelope, reachability_map=None, ri_calc="linear"):
         reach = {}
         positions = self.network.nodes()
         reachable_points = []
@@ -344,7 +348,6 @@ class Map2d_optimized(Map2d):
         run = True
         last_node = None
         for node in planner.network.path:
-            print("node: ", node)
             if node == last_node:
                 run = True
                 continue
@@ -355,15 +358,25 @@ class Map2d_optimized(Map2d):
             for pos in positions:
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                 [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
-                ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
+                if ri_calc == "linear":
+                        ri = self.linear_reach(envelope, x, y, z)
+                else:
+                    ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
                 if envelope.point_inside(x, y, z) and ri > 10:
                     reachable_pos.append(pos)
             if len(reachable_pos) == 0:
                 ideal_pos, reachable_points = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points)
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
                 reach[positions[0]] = reachable_points
-
-                if node != planner.network.path[planner.network.path.index(reachable_points[-1])+1]:
+                
+                # check if final node is reached
+                if planner.network.path.index(reachable_points[-1])+1 == len(planner.network.path):
+                    print("last node: ", last_node, reachable_points[-1])
+                    last_node = reachable_points[-1]
+                    run = False
+                    return reach, positions
+                # check if advancement was made through optimization and jump to that node
+                elif node != planner.network.path[planner.network.path.index(reachable_points[-1])+1]:
                     print("last node: ", last_node, reachable_points[-1])
                     last_node = reachable_points[-1]
                     run = False
@@ -379,6 +392,7 @@ class Map2d_optimized(Map2d):
 
         # optimization for last one not necessary as there is a whole envelope of points that works
         # ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[-1], reachable_points)
+        print(positions[-1], reachable_points)
         reach[positions[-1]] = reachable_points
 
         return reach, positions
@@ -392,3 +406,23 @@ class Map2d_optimized(Map2d):
             return reachability_map.spheres[k].ri
         else:
             return 100
+        
+    def linear_reach(self, envelope, node_x, node_y, node_z):
+        if node_z > envelope.h_out+envelope.z:
+            d = math.sqrt((node_x-envelope.x)**2 + (node_y-envelope.y)**2 + (node_z-envelope.h_out-envelope.z)**2)
+        elif node_z < envelope.z:
+            d = math.sqrt((node_x-envelope.x)**2 + (node_y-envelope.y)**2 + (node_z-envelope.z)**2)
+        else:
+            d = math.sqrt((node_x-envelope.x)**2 + (node_y-envelope.y)**2)
+
+        linear_out = 0
+        linear_in = 0
+        if d < envelope.r_out:
+            linear_out = (1 - d/envelope.r_out) * 50
+        if d > envelope.r_in and d < 2*envelope.r_in:
+            linear_in = (d/envelope.r_in - 1) * 50
+        elif d > 2*envelope.r_in:
+            linear_in = 50
+        return linear_out + linear_in
+        
+        
