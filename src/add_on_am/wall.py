@@ -1,12 +1,10 @@
 import math
 
-from compas.datastructures import Mesh
-from compas.datastructures import Network
-from compas.geometry import Vector, Point, Translation, KDTree
+from compas.datastructures import Mesh, Network
+from compas.geometry import Point, KDTree, Plane, Frame
+from compas_ghpython.utilities import draw_frame
 from collections import OrderedDict
 from operator import itemgetter
-from reachability_map import ReachabilityMap2D
-from cart_sphe import distance
 
 
 class Wall(object):
@@ -453,3 +451,14 @@ class Map2d_optimized(Map2d):
         return False
         
         
+    def pose(self, node):
+        normal = self.wall.mesh.vertex_normal(node)
+        x, y, z = self.wall.mesh.vertex_coordinates(node)
+        return draw_frame(Frame.from_plane(Plane(Point(x, y, z), normal)))
+    
+
+    def poses(self, nodes):
+        frames = []
+        for node in nodes:
+            frames.append(self.pose(node))
+        return frames
