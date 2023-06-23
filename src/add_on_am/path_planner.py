@@ -108,9 +108,9 @@ class SurfacePathPlanner():
         #     self.select_node_frame(start)
         # self.select_node_frame(end)
     
-    def set_node_frame(self, node):
+    def set_node_frame(self, node, flip):
         norm = Vector.from_data(self.network.node_attributes(key=node, names=['vx','vy','vz']))
-        if dot_vectors(norm, -Vector.Zaxis())<0:
+        if flip:
             norm = norm.inverted()
         v1 = cross_vectors(norm, Vector.Yaxis())
         v2 = cross_vectors(norm,v1)

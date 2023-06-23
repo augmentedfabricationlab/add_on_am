@@ -284,7 +284,7 @@ class Map2d_optimized(Map2d):
     
 
     # finding the the ideal position out of an envelope of positions from all positions and from a given starting node
-    def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, dist=None, ri_calc="linear"):
+    def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, dist=None, ri_calc="linear", ri_threshold=0):
         start_pos = self.length + 1
         self.add_to_network(current_pos, envelope, dist)
         positions = self.network.nodes()
@@ -308,9 +308,9 @@ class Map2d_optimized(Map2d):
                         ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
                     
                     inside = envelope.point_inside(x, y, z)
-                    if inside and ri > 40:
+                    if inside and ri > ri_threshold:
                         reachable_pos.append(pos)
-                    elif inside and ri <= 40:
+                    elif inside and ri <= ri_threshold:
                         if self.check_pose(node, reachability_map, kd, envelope):
                             reachable_pos.append(pos)
 
@@ -340,7 +340,7 @@ class Map2d_optimized(Map2d):
     
 
     # finding the ideal positions to print as much as possible of the continous path
-    def pos_by_path(self, planner, envelope, reachability_map=None, ri_calc="linear"):
+    def pos_by_path(self, planner, envelope, reachability_map=None, ri_calc="linear", ri_threshold=0):
         reach = {}
         positions = self.network.nodes()
         reachable_points = []
@@ -368,9 +368,9 @@ class Map2d_optimized(Map2d):
                     ri = self.reachability(reachability_map, kd, envelope.x, envelope.y, x, y, z)
                 
                 inside = envelope.point_inside(x, y, z)
-                if inside and ri > 40:
+                if inside and ri > ri_threshold:
                     reachable_pos.append(pos)
-                elif inside and ri <= 40:
+                elif inside and ri <= ri_threshold:
                     if self.check_pose(node, reachability_map, kd, envelope):
                         reachable_pos.append(pos)
 
@@ -450,15 +450,20 @@ class Map2d_optimized(Map2d):
                 return True
         return False
         
-        
-    def pose(self, node):
-        normal = self.wall.mesh.vertex_normal(node)
-        x, y, z = self.wall.mesh.vertex_coordinates(node)
+    # returns pose at that node   
+    def pose(self, node, planner, flip=False):
+        normal = planner.network.node_attributes(node, ['vx', 'vy', 'vz'])
+        x, y, z = planner.network.node_coordinates(node)
         return draw_frame(Frame.from_plane(Plane(Point(x, y, z), normal)))
     
+    # returns poses of all nodes that are poses ordered along the path
+    def poses(self, nodes, planner, pos):
+        # if pos is on other side flip normals
+        flip = False
+        if pos.Y < planner.network.node_attribute(nodes[0], "y"):
+            flip = True
 
-    def poses(self, nodes):
         frames = []
         for node in nodes:
-            frames.append(self.pose(node))
+            frames.append(draw_frame(planner.set_node_frame(node, flip)))           
         return frames
