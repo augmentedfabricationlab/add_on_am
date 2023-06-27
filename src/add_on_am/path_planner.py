@@ -5,7 +5,6 @@ from compas.utilities import linspace
 from compas.datastructures import Network, network_polylines
 from compas.geometry import Frame, Vector, Point, Translation, KDTree, angle_vectors, cross_vectors, distance_point_point, dot_vectors
 from compas.colors import Color, ColorMap
-from compas.rpc import Proxy
 
 class SurfacePathPlanner():
     def __init__(self):

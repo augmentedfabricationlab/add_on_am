@@ -1,9 +1,13 @@
 import math
-from cart_sphe import magnitude, shift_origin, distance
+
 
 from compas.datastructures import Network
 from compas.geometry import Vector, Point, KDTree, barycentric_coordinates
 from compas.rpc import Proxy
+
+# installation does not work because of this line, but importing cart_sph itself is not a problem
+from cart_sphe import magnitude, shift_origin, distance
+
 
 class HeatPathPlanner():
     def __init__(self):

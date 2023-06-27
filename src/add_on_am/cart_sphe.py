@@ -2,7 +2,7 @@ from math import sin, cos, atan2, sqrt, pi
 
 
 def distance(a, b):
-    """Returns the distance between two cartesian points."""
+    # Returns the distance between two cartesian points.
     x = (b[0] - a[0]) ** 2
     y = (b[1] - a[1]) ** 2
     z = (b[2] - a[2]) ** 2
@@ -10,12 +10,12 @@ def distance(a, b):
 
 
 def magnitude(x, y, z):
-    """Returns the magnitude of the vector."""
+    # Returns the magnitude of the vector.
     return sqrt(x * x + y * y + z * z)
 
 
 def to_spherical(x, y, z):
-    """Converts a cartesian coordinate (x, y, z) into a spherical one (radius, theta, phi)."""
+    # Converts a cartesian coordinate (x, y, z) into a spherical one (radius, theta, phi).
     radius = magnitude(x, y, z)
     if z > 0:
         theta = atan2(sqrt(x * x + y * y), z)
@@ -42,7 +42,7 @@ def to_spherical(x, y, z):
 
 
 def to_cartesian(radius, theta, phi):
-    """Converts a spherical coordinate (radius, theta, phi) into a cartesian one (x, y, z)."""
+    # Converts a spherical coordinate (radius, theta, phi) into a cartesian one (x, y, z).
     x = radius * cos(phi) * sin(theta)
     y = radius * sin(phi) * sin(theta)
     z = radius * cos(theta)
@@ -50,5 +50,5 @@ def to_cartesian(radius, theta, phi):
 
 
 def shift_origin(x, y, z, origin):
-    """Shifts the origin of a cartesian coordinate (x, y, z) to a new origin."""
+    # Shifts the origin of a cartesian coordinate (x, y, z) to a new origin.
     return x - origin[0], y - origin[1], z - origin[2]

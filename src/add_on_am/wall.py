@@ -1,8 +1,8 @@
 import math
 
+
 from compas.datastructures import Mesh, Network
 from compas.geometry import Point, KDTree, Plane, Frame
-from compas_ghpython.utilities import draw_frame
 from collections import OrderedDict
 from operator import itemgetter
 
@@ -109,20 +109,6 @@ class Wall(object):
             if force > 0 or abs(force) < 0.005:
                 self.mesh.face_attribute(face, "tension", value=True) # if n positive => tension
         print(len(n), i)
-
-
-    def numpy_test_function(self, value):
-        from compas.rpc import Proxy
-        np = Proxy('numpy')
-        linalg = Proxy('numpy.linalg')
-
-        print("running numpy test function")
-
-        a = np.array([[1, 2], [3, 5]])
-        b = np.array([1, 2*value])
-        x = linalg.solve(a, b)
-
-        return x
     
 
 class Map2d:
@@ -454,7 +440,7 @@ class Map2d_optimized(Map2d):
     def pose(self, node, planner, flip=False):
         normal = planner.network.node_attributes(node, ['vx', 'vy', 'vz'])
         x, y, z = planner.network.node_coordinates(node)
-        return draw_frame(Frame.from_plane(Plane(Point(x, y, z), normal)))
+        return Frame.from_plane(Plane(Point(x, y, z), normal))
     
     # returns poses of all nodes that are poses ordered along the path
     def poses(self, nodes, planner, pos):
@@ -465,5 +451,5 @@ class Map2d_optimized(Map2d):
 
         frames = []
         for node in nodes:
-            frames.append(draw_frame(planner.set_node_frame(node, flip)))           
+            frames.append(planner.set_node_frame(node, flip))        
         return frames
