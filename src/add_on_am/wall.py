@@ -328,7 +328,8 @@ class Map2d_optimized(Map2d):
     # finding the ideal positions to print as much as possible of the continous path
     def pos_by_path(self, planner, envelope, reachability_map=None, ri_calc="linear", ri_threshold=0):
         reach = {}
-        positions = self.network.nodes()
+        positions_list = []
+        positions = list(self.network.nodes())
         reachable_points = []
         if reachability_map:
             kd = KDTree(reachability_map.points)
@@ -363,6 +364,7 @@ class Map2d_optimized(Map2d):
 
             if len(reachable_pos) == 0:
                 ideal_pos, reachable_points = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points)
+                # ideal_pos = positions[0]
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
                 reach[ideal_pos] = reachable_points
                 
@@ -379,10 +381,13 @@ class Map2d_optimized(Map2d):
                     run = False
 
                 positions = list(self.network.nodes())
-                reachable_points = []
+                reachable_points = [node]
             else:
                 positions = reachable_pos
                 reachable_points.append(node)
+            
+            positions_list.append(positions)
+            
         
         # for some reason dicts cant be ordered as wanted and are always ordered by length of items, no idea who had this ingenius idea
         # last value of list is choosen for last position, as least overlap with previous position???
@@ -391,7 +396,7 @@ class Map2d_optimized(Map2d):
         # ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[-1], reachable_points)
         reach[positions[-1]] = reachable_points
 
-        return reach, positions
+        return reach, positions, positions_list
     
 
     def reachability(self, reachability_map, kd, pos_x, pos_y, node_x, node_y, node_z):
