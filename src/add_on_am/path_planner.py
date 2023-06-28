@@ -111,7 +111,7 @@ class SurfacePathPlanner():
         norm = Vector.from_data(self.network.node_attributes(key=node, names=['vx','vy','vz']))
         if flip:
             norm = norm.inverted()
-        v1 = cross_vectors(norm, Vector.Yaxis())
+        v1 = cross_vectors(norm, Vector.Yaxis()) # Zaxis
         v2 = cross_vectors(norm,v1)
         frame = Frame(Point.from_data(self.network.node_coordinates(node)), v1, v2)
         self.network.node_attribute(key=node, name='frame', value=frame)

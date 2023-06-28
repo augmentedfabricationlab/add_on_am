@@ -37,7 +37,7 @@
           <items count="3">
             <item name="Date" type_name="gh_date" type_code="8">637525390568928595</item>
             <item name="Description" type_name="gh_string" type_code="10"></item>
-            <item name="Name" type_name="gh_string" type_code="10">segmentation.ghx</item>
+            <item name="Name" type_name="gh_string" type_code="10">segmentation_heat.ghx</item>
           </items>
           <chunks count="3">
             <chunk name="Revisions">
@@ -48,10 +48,10 @@
             <chunk name="Projection">
               <items count="2">
                 <item name="Target" type_name="gh_drawing_point" type_code="30">
-                  <X>-4734</X>
-                  <Y>-1098</Y>
+                  <X>-2083</X>
+                  <Y>-1410</Y>
                 </item>
-                <item name="Zoom" type_name="gh_single" type_code="5">1.17647052</item>
+                <item name="Zoom" type_name="gh_single" type_code="5">2.16750216</item>
               </items>
             </chunk>
             <chunk name="Views">
@@ -85,9 +85,9 @@
         </chunk>
         <chunk name="DefinitionObjects">
           <items count="1">
-            <item name="ObjectCount" type_name="gh_int32" type_code="3">92</item>
+            <item name="ObjectCount" type_name="gh_int32" type_code="3">94</item>
           </items>
-          <chunks count="92">
+          <chunks count="94">
             <chunk name="Object" index="0">
               <items count="2">
                 <item name="GUID" type_name="gh_guid" type_code="9">c552a431-af5b-46a9-a8a4-0fcbc27ef596</item>
@@ -811,12 +811,12 @@ wall = Wall(width, height, elsize, x, y, rotation)
 print(wall.x_size, wall.z_size)</item>
                     <item name="Description" type_name="gh_string" type_code="10">GhPython provides a Python script component</item>
                     <item name="EditorLocation" type_name="gh_drawing_point" type_code="30">
-                      <X>652</X>
-                      <Y>247</Y>
+                      <X>1228</X>
+                      <Y>659</Y>
                     </item>
                     <item name="EditorSize" type_name="gh_drawing_size" type_code="32">
-                      <W>906</W>
-                      <H>683</H>
+                      <W>1424</W>
+                      <H>1352</H>
                     </item>
                     <item name="Hidden" type_name="gh_bool" type_code="1">true</item>
                     <item name="HideInput" type_name="gh_bool" type_code="1">true</item>
@@ -3025,9 +3025,9 @@ print(c_curve)</item>
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>2257</X>
+                          <X>2154</X>
                           <Y>274</Y>
-                          <W>232</W>
+                          <W>610</W>
                           <H>22</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
@@ -3476,9 +3476,9 @@ points, edges = draw_network(network)
                     <chunk name="Attributes">
                       <items count="2">
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
-                          <X>2372</X>
+                          <X>2255</X>
                           <Y>304</Y>
-                          <W>134</W>
+                          <W>316</W>
                           <H>22</H>
                         </item>
                         <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
@@ -5989,7 +5989,7 @@ envelope.y = pos[index].Y
                           <items count="6">
                             <item name="Description" type_name="gh_string" type_code="10">Script variable Visualization</item>
                             <item name="InstanceGuid" type_name="gh_guid" type_code="9">87368b1d-948f-4545-921f-5d6bfe54a19a</item>
-                            <item name="Name" type_name="gh_string" type_code="10">positions_list</item>
+                            <item name="Name" type_name="gh_string" type_code="10">positions</item>
                             <item name="NickName" type_name="gh_string" type_code="10">positions</item>
                             <item name="Optional" type_name="gh_bool" type_code="1">false</item>
                             <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
@@ -18976,7 +18976,7 @@ counter = st[counter_key]
                         <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
                           <X>4014</X>
                           <Y>1008</Y>
-                          <W>60</W>
+                          <W>114</W>
                           <H>22</H>
                         </item>
                       </items>
@@ -19038,7 +19038,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995373439</Xz>
                                   <Yx>0.623717362793322</Yx>
                                   <Yy>-0.781649952184776</Yy>
-                                  <Yz>-5.9997339706393E-05</Yz>
+                                  <Yz>-5.99973397063929E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19068,7 +19068,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995369878</Xz>
                                   <Yx>0.623863968854361</Yx>
                                   <Yy>-0.781532945409942</Yy>
-                                  <Yz>-6.00345302391299E-05</Yz>
+                                  <Yz>-6.003453023913E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19082,8 +19082,8 @@ counter = st[counter_key]
                                   <Xy>0</Xy>
                                   <Xz>-0.999999995368094</Xz>
                                   <Yx>0.623937312163499</Yx>
-                                  <Yy>-0.781474392980223</Yy>
-                                  <Yz>-6.00531548748793E-05</Yz>
+                                  <Yy>-0.781474392980222</Yy>
+                                  <Yz>-6.00531548748794E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19173,7 +19173,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995363118</Xz>
                                   <Yx>0.624377505319265</Yx>
                                   <Yy>-0.781122735065329</Yy>
-                                  <Yz>-6.01277919112069E-05</Yz>
+                                  <Yz>-6.0127791911207E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19323,7 +19323,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995339439</Xz>
                                   <Yx>0.625112130445712</Yx>
                                   <Yy>-0.780534958043042</Yy>
-                                  <Yz>-6.03520503841536E-05</Yz>
+                                  <Yz>-6.03520503841537E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19353,7 +19353,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995338731</Xz>
                                   <Yx>0.625259194168478</Yx>
                                   <Yy>-0.780417155413147</Yy>
-                                  <Yz>-6.03708311048705E-05</Yz>
+                                  <Yz>-6.03708311048706E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19413,7 +19413,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995331499</Xz>
                                   <Yx>0.625553462585292</Yx>
                                   <Yy>-0.780181300592255</Yy>
-                                  <Yz>-6.04460815089277E-05</Yz>
+                                  <Yz>-6.04460815089278E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19428,7 +19428,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995329717</Xz>
                                   <Yx>0.625627053373525</Yx>
                                   <Yy>-0.780122289407998</Yy>
-                                  <Yz>-6.04647335009667E-05</Yz>
+                                  <Yz>-6.04647335009666E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19488,7 +19488,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999995322463</Xz>
                                   <Yx>0.625921556765482</Yx>
                                   <Yy>-0.779886018025176</Yy>
-                                  <Yz>-6.05401521695627E-05</Yz>
+                                  <Yz>-6.05401521695628E-05</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19683,7 +19683,7 @@ counter = st[counter_key]
                                   <Xz>-0.99999958125425</Xz>
                                   <Yx>0.648819389109486</Yx>
                                   <Yy>-0.760942210525492</Yy>
-                                  <Yz>-0.000593764406516065</Yz>
+                                  <Yz>-0.000593764406516066</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19698,7 +19698,7 @@ counter = st[counter_key]
                                   <Xz>-0.99999958243836</Xz>
                                   <Yx>0.648286466486355</Yx>
                                   <Yy>-0.761396287348903</Yy>
-                                  <Yz>-0.000592437290175705</Yz>
+                                  <Yz>-0.000592437290175704</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19712,7 +19712,7 @@ counter = st[counter_key]
                                   <Xy>0</Xy>
                                   <Xz>-0.999999583532743</Xz>
                                   <Yx>0.647754089860117</Yx>
-                                  <Yy>-0.761849256468854</Yy>
+                                  <Yy>-0.761849256468853</Yy>
                                   <Yz>-0.000591174548900692</Yz>
                                 </item>
                               </items>
@@ -19803,7 +19803,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999590603934</Xz>
                                   <Yx>0.644571547140476</Yx>
                                   <Yy>-0.764543772737132</Yy>
-                                  <Yz>-0.000583254495155939</Yz>
+                                  <Yz>-0.00058325449515594</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19863,7 +19863,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999595159904</Xz>
                                   <Yx>0.642461017531321</Yx>
                                   <Yy>-0.766318149825469</Yy>
-                                  <Yz>-0.000578100933142701</Yz>
+                                  <Yz>-0.0005781009331427</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19893,7 +19893,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999597354403</Xz>
                                   <Yx>0.641409145624114</Yx>
                                   <Yy>-0.767198785588301</Yy>
-                                  <Yz>-0.000575588030391254</Yz>
+                                  <Yz>-0.000575588030391255</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -19983,7 +19983,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999604023666</Xz>
                                   <Yx>0.638266888288885</Yx>
                                   <Yy>-0.769814949636921</Yy>
-                                  <Yz>-0.000568004866901891</Yz>
+                                  <Yz>-0.00056800486690189</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20088,7 +20088,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999611619111</Xz>
                                   <Yx>0.634626421937955</Yx>
                                   <Yy>-0.772818860883131</Yy>
-                                  <Yz>-0.000559322383694398</Yz>
+                                  <Yz>-0.000559322383694397</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20117,7 +20117,7 @@ counter = st[counter_key]
                                   <Xy>0</Xy>
                                   <Xz>-0.999999613734023</Xz>
                                   <Yx>0.633591314784896</Yx>
-                                  <Yy>-0.773667716597585</Yy>
+                                  <Yy>-0.773667716597584</Yy>
                                   <Yz>-0.000556887625020501</Yz>
                                 </item>
                               </items>
@@ -20133,7 +20133,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999614731015</Xz>
                                   <Yx>0.63307462542512</Yx>
                                   <Yy>-0.774090569522569</Yy>
-                                  <Yz>-0.000555714916455632</Yz>
+                                  <Yz>-0.000555714916455633</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20178,7 +20178,7 @@ counter = st[counter_key]
                                   <Xz>-0.999999617805924</Xz>
                                   <Yx>0.631527875800904</Yx>
                                   <Yy>-0.775352975893715</Yy>
-                                  <Yz>-0.000552140524372518</Yz>
+                                  <Yz>-0.000552140524372517</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20205,7 +20205,7 @@ counter = st[counter_key]
                                   <Oz>0.0749966067931142</Oz>
                                   <Xx>-0.000871807485815262</Xx>
                                   <Xy>0</Xy>
-                                  <Xz>-0.999999619975781</Xz>
+                                  <Xz>-0.999999619975782</Xz>
                                   <Yx>0.63049954400306</Yx>
                                   <Yy>-0.776189424605845</Yy>
                                   <Yz>-0.000549674431154573</Yz>
@@ -20313,7 +20313,7 @@ counter = st[counter_key]
                                   <Xz>-0.999993845199498</Xz>
                                   <Yx>0.649666392592986</Yx>
                                   <Yy>-0.760216010629875</Yy>
-                                  <Yz>-0.00227936772235029</Yz>
+                                  <Yz>-0.0022793677223503</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20388,7 +20388,7 @@ counter = st[counter_key]
                                   <Xz>-0.99999360756587</Xz>
                                   <Yx>0.656772994804286</Yx>
                                   <Yy>-0.754084689196249</Yy>
-                                  <Yz>-0.0023483644532924</Yz>
+                                  <Yz>-0.00234836445329241</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20433,7 +20433,7 @@ counter = st[counter_key]
                                   <Xz>-0.999993458265575</Xz>
                                   <Yx>0.661083374864272</Yx>
                                   <Yy>-0.750308638853033</Yy>
-                                  <Yz>-0.00239122156500188</Yz>
+                                  <Yz>-0.00239122156500187</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20463,7 +20463,7 @@ counter = st[counter_key]
                                   <Xz>-0.999993355400077</Xz>
                                   <Yx>0.663976286796676</Yx>
                                   <Yy>-0.747749711987062</Yy>
-                                  <Yz>-0.00242049477687892</Yz>
+                                  <Yz>-0.00242049477687891</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20763,7 +20763,7 @@ counter = st[counter_key]
                                   <Xz>-0.999992181050098</Xz>
                                   <Yx>0.693736436419332</Yx>
                                   <Yy>-0.720223736515323</Yy>
-                                  <Yz>-0.00274338187495786</Yz>
+                                  <Yz>-0.00274338187495785</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20823,7 +20823,7 @@ counter = st[counter_key]
                                   <Xz>-0.999991908784129</Xz>
                                   <Yx>0.699864681794649</Yx>
                                   <Yy>-0.714269907495837</Yy>
-                                  <Yz>-0.00281539026834484</Yz>
+                                  <Yz>-0.00281539026834483</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20838,7 +20838,7 @@ counter = st[counter_key]
                                   <Xz>-0.999917523945922</Xz>
                                   <Yx>0.776500318668865</Yx>
                                   <Yy>-0.630037923045124</Yy>
-                                  <Yz>-0.00997349648507641</Yz>
+                                  <Yz>-0.00997349648507643</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20853,7 +20853,7 @@ counter = st[counter_key]
                                   <Xz>-0.999919176853389</Xz>
                                   <Yx>0.773378620878291</Yx>
                                   <Yy>-0.633868136172946</Yy>
-                                  <Yz>-0.0098333469901187</Yz>
+                                  <Yz>-0.00983334699011869</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20868,7 +20868,7 @@ counter = st[counter_key]
                                   <Xz>-0.999920773083883</Xz>
                                   <Yx>0.770263349769634</Yx>
                                   <Yy>-0.637652216555131</Yy>
-                                  <Yz>-0.00969653154434294</Yz>
+                                  <Yz>-0.00969653154434295</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20898,7 +20898,7 @@ counter = st[counter_key]
                                   <Xz>-0.999923829672609</Xz>
                                   <Yx>0.764053363208306</Yx>
                                   <Yy>-0.645084114635437</Yy>
-                                  <Yz>-0.00943097105769035</Yz>
+                                  <Yz>-0.00943097105769032</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20913,7 +20913,7 @@ counter = st[counter_key]
                                   <Xz>-0.999925297383038</Xz>
                                   <Yx>0.760959356685261</Yx>
                                   <Yy>-0.648732867451047</Yy>
-                                  <Yz>-0.00930183647973967</Yz>
+                                  <Yz>-0.00930183647973965</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20958,7 +20958,7 @@ counter = st[counter_key]
                                   <Xz>-0.999929441347731</Xz>
                                   <Yx>0.751725381251518</Yx>
                                   <Yy>-0.659415801005619</Yy>
-                                  <Yz>-0.00893042923820638</Yz>
+                                  <Yz>-0.00893042923820642</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20973,7 +20973,7 @@ counter = st[counter_key]
                                   <Xz>-0.999930746483398</Xz>
                                   <Yx>0.748664405074225</Yx>
                                   <Yy>-0.662890615064255</Yy>
-                                  <Yz>-0.0088114150164079</Yz>
+                                  <Yz>-0.00881141501640786</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -20988,7 +20988,7 @@ counter = st[counter_key]
                                   <Xz>-0.99993201798015</Xz>
                                   <Yx>0.745612490827361</Yx>
                                   <Yy>-0.666323058462756</Yy>
-                                  <Yz>-0.00869455479348183</Yz>
+                                  <Yz>-0.00869455479348184</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21003,7 +21003,7 @@ counter = st[counter_key]
                                   <Xz>-0.999933251315002</Xz>
                                   <Yx>0.742569852197717</Yx>
                                   <Yy>-0.669713666766127</Yy>
-                                  <Yz>-0.00858016047228668</Yz>
+                                  <Yz>-0.00858016047228669</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21018,7 +21018,7 @@ counter = st[counter_key]
                                   <Xz>-0.999934452632809</Xz>
                                   <Yx>0.739536704192944</Yx>
                                   <Yy>-0.673062967697302</Yy>
-                                  <Yz>-0.0084678607652328</Yz>
+                                  <Yz>-0.00846786076523278</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21033,7 +21033,7 @@ counter = st[counter_key]
                                   <Xz>-0.999935622418188</Xz>
                                   <Yx>0.73651335519775</Yx>
                                   <Yy>-0.67637136795123</Yy>
-                                  <Yz>-0.0083576450711981</Yz>
+                                  <Yz>-0.00835764507119812</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21048,7 +21048,7 @@ counter = st[counter_key]
                                   <Xz>-0.999936762357562</Xz>
                                   <Yx>0.733500103806422</Yx>
                                   <Yy>-0.679639275442621</Yy>
-                                  <Yz>-0.00824942372513831</Yz>
+                                  <Yz>-0.0082494237251383</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21063,7 +21063,7 @@ counter = st[counter_key]
                                   <Xz>-0.999937867297711</Xz>
                                   <Yx>0.730497067475863</Yx>
                                   <Yy>-0.682867276256521</Yy>
-                                  <Yz>-0.00814355126247011</Yz>
+                                  <Yz>-0.00814355126247014</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21078,7 +21078,7 @@ counter = st[counter_key]
                                   <Xz>-0.999938950744639</Xz>
                                   <Yx>0.727504537613851</Yx>
                                   <Yy>-0.686055770055926</Yy>
-                                  <Yz>-0.00803916191079883</Yz>
+                                  <Yz>-0.00803916191079886</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21093,7 +21093,7 @@ counter = st[counter_key]
                                   <Xz>-0.999940000424291</Xz>
                                   <Yx>0.724522767582929</Yx>
                                   <Yy>-0.689205166870417</Yy>
-                                  <Yz>-0.00793707837264141</Yz>
+                                  <Yz>-0.00793707837264138</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21108,7 +21108,7 @@ counter = st[counter_key]
                                   <Xz>-0.999941027165369</Xz>
                                   <Yx>0.721551917800477</Yx>
                                   <Yy>-0.692315981027847</Yy>
-                                  <Yz>-0.00783660206361158</Yz>
+                                  <Yz>-0.0078366020636116</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21123,7 +21123,7 @@ counter = st[counter_key]
                                   <Xz>-0.99994202229958</Xz>
                                   <Yx>0.718592119429162</Yx>
                                   <Yy>-0.69538872888405</Yy>
-                                  <Yz>-0.00773832251400614</Yz>
+                                  <Yz>-0.0077383225140061</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21138,7 +21138,7 @@ counter = st[counter_key]
                                   <Xz>-0.999942999326275</Xz>
                                   <Yx>0.715643625743371</Yx>
                                   <Yy>-0.698423804454942</Yy>
-                                  <Yz>-0.00764135482533727</Yz>
+                                  <Yz>-0.00764135482533725</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21153,7 +21153,7 @@ counter = st[counter_key]
                                   <Xz>-0.999943946959468</Xz>
                                   <Yx>0.712706654012036</Yx>
                                   <Yy>-0.701421610850443</Yy>
-                                  <Yz>-0.00754646665250924</Yz>
+                                  <Yz>-0.00754646665250925</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21168,7 +21168,7 @@ counter = st[counter_key]
                                   <Xz>-0.999944874152447</Xz>
                                   <Yx>0.709781327907813</Yx>
                                   <Yy>-0.704382650489213</Yy>
-                                  <Yz>-0.00745306938196771</Yz>
+                                  <Yz>-0.00745306938196773</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21183,7 +21183,7 @@ counter = st[counter_key]
                                   <Xz>-0.999945774175073</Xz>
                                   <Yx>0.706867746950691</Yx>
                                   <Yy>-0.707307425907096</Yy>
-                                  <Yz>-0.00736162872828693</Yz>
+                                  <Yz>-0.00736162872828696</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21198,7 +21198,7 @@ counter = st[counter_key]
                                   <Xz>-0.999946658263072</Xz>
                                   <Yx>0.703966127403632</Yx>
                                   <Yy>-0.710196323764889</Yy>
-                                  <Yz>-0.00727139458225057</Yz>
+                                  <Yz>-0.00727139458225059</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21213,7 +21213,7 @@ counter = st[counter_key]
                                   <Xz>-0.999947516435963</Xz>
                                   <Yx>0.701076654273365</Yx>
                                   <Yy>-0.71304973777283</Yy>
-                                  <Yz>-0.00718305610191042</Yz>
+                                  <Yz>-0.00718305610191038</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21258,7 +21258,7 @@ counter = st[counter_key]
                                   <Xz>-0.999949975884597</Xz>
                                   <Yx>0.69248205666907</Yx>
                                   <Yy>-0.721401844552058</Yy>
-                                  <Yz>-0.00692675019489655</Yz>
+                                  <Yz>-0.00692675019489653</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21268,12 +21268,12 @@ counter = st[counter_key]
                                   <Ox>0.17500017440044</Ox>
                                   <Oy>-0.206999621472871</Oy>
                                   <Oz>0.524982883432814</Oz>
-                                  <Xx>-0.00992389598067657</Xx>
+                                  <Xx>-0.00992389598067655</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.999950756931843</Xz>
                                   <Yx>0.689642218835011</Yx>
                                   <Yy>-0.72411792265105</Yy>
-                                  <Yz>-0.00684427467668603</Yz>
+                                  <Yz>-0.00684427467668602</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21318,7 +21318,7 @@ counter = st[counter_key]
                                   <Xz>-0.999952992026937</Xz>
                                   <Yx>0.681199400642947</Yx>
                                   <Yy>-0.732068130040629</Yy>
-                                  <Yz>-0.00660526627061395</Yz>
+                                  <Yz>-0.00660526627061396</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21348,7 +21348,7 @@ counter = st[counter_key]
                                   <Xz>-0.999954398131785</Xz>
                                   <Yx>0.67563567170974</Yx>
                                   <Yy>-0.737207435705154</Yy>
-                                  <Yz>-0.00645258509119358</Yz>
+                                  <Yz>-0.00645258509119359</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21363,7 +21363,7 @@ counter = st[counter_key]
                                   <Xz>-0.999955080820082</Xz>
                                   <Yx>0.672873471782818</Yx>
                                   <Yy>-0.73973009478479</Yy>
-                                  <Yz>-0.00637791820445309</Yz>
+                                  <Yz>-0.0063779182044531</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21513,7 +21513,7 @@ counter = st[counter_key]
                                   <Xz>-0.999775870318821</Xz>
                                   <Yx>0.710532127070241</Yx>
                                   <Yy>-0.703503883365187</Yy>
-                                  <Yz>-0.0150460124664127</Yz>
+                                  <Yz>-0.0150460124664128</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21543,7 +21543,7 @@ counter = st[counter_key]
                                   <Xz>-0.999763765165588</Xz>
                                   <Yx>0.719704728399048</Yx>
                                   <Yy>-0.694103947363365</Yy>
-                                  <Yz>-0.0156465387433821</Yz>
+                                  <Yz>-0.015646538743382</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21588,7 +21588,7 @@ counter = st[counter_key]
                                   <Xz>-0.999743688618626</Xz>
                                   <Yx>0.733664980601686</Yx>
                                   <Yy>-0.679308224286526</Yy>
-                                  <Yz>-0.0166142305092869</Yz>
+                                  <Yz>-0.016614230509287</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21708,7 +21708,7 @@ counter = st[counter_key]
                                   <Xz>-0.999675696296196</Xz>
                                   <Yx>0.771903986622736</Yx>
                                   <Yy>-0.635434956440607</Yy>
-                                  <Yz>-0.019663457713494</Yz>
+                                  <Yz>-0.0196634577134939</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21753,7 +21753,7 @@ counter = st[counter_key]
                                   <Xz>-0.999643054826803</Xz>
                                   <Yx>0.786534363414432</Yx>
                                   <Yy>-0.617188642238845</Yy>
-                                  <Yz>-0.0210208244278296</Yz>
+                                  <Yz>-0.0210208244278295</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21768,7 +21768,7 @@ counter = st[counter_key]
                                   <Xz>-0.999631060458564</Xz>
                                   <Yx>0.791434971260151</Yx>
                                   <Yy>-0.610874983567364</Yy>
-                                  <Yz>-0.0215044348453246</Yz>
+                                  <Yz>-0.0215044348453245</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21783,7 +21783,7 @@ counter = st[counter_key]
                                   <Xz>-0.999618477082602</Xz>
                                   <Yx>0.796344707403954</Yx>
                                   <Yy>-0.604442663155044</Yy>
-                                  <Yz>-0.0220039530027749</Yz>
+                                  <Yz>-0.022003953002775</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21843,7 +21843,7 @@ counter = st[counter_key]
                                   <Xz>-0.999561028070149</Xz>
                                   <Yx>0.816036812784365</Yx>
                                   <Yy>-0.577493634651619</Yy>
-                                  <Yz>-0.0241872304656253</Yz>
+                                  <Yz>-0.0241872304656252</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21888,7 +21888,7 @@ counter = st[counter_key]
                                   <Xz>-0.999509005275686</Xz>
                                   <Yx>0.83080328944493</Yx>
                                   <Yy>-0.555956466025255</Yy>
-                                  <Yz>-0.0260442341448864</Yz>
+                                  <Yz>-0.0260442341448865</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -21948,7 +21948,7 @@ counter = st[counter_key]
                                   <Xz>-0.999423923648091</Xz>
                                   <Yx>0.850365470360122</Yx>
                                   <Yy>-0.525399562254829</Yy>
-                                  <Yz>-0.028876751923357</Yz>
+                                  <Yz>-0.0288767519233569</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22021,7 +22021,7 @@ counter = st[counter_key]
                                   <Xx>-0.0378758186700134</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.999282453743723</Xz>
-                                  <Yx>0.874362819548908</Yx>
+                                  <Yx>0.874362819548907</Yx>
                                   <Yy>-0.484139788406551</Yy>
                                   <Yz>-0.0331409877967589</Yz>
                                 </item>
@@ -22113,7 +22113,7 @@ counter = st[counter_key]
                                   <Xz>-0.994690851274459</Xz>
                                   <Yx>0.937997472159596</Yx>
                                   <Yy>-0.332781334874305</Yy>
-                                  <Yz>-0.0970429048487552</Yz>
+                                  <Yz>-0.0970429048487556</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22158,7 +22158,7 @@ counter = st[counter_key]
                                   <Xz>-0.995996735376651</Xz>
                                   <Yx>0.922752879778347</Yx>
                                   <Yy>-0.376388925605164</Yy>
-                                  <Yz>-0.082816058482385</Yz>
+                                  <Yz>-0.0828160584823851</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22203,7 +22203,7 @@ counter = st[counter_key]
                                   <Xz>-0.996874637369066</Xz>
                                   <Yx>0.905756872618984</Yx>
                                   <Yy>-0.417674849102924</Yy>
-                                  <Yz>-0.0717788835962681</Yz>
+                                  <Yz>-0.071778883596268</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22276,7 +22276,7 @@ counter = st[counter_key]
                                   <Xx>-0.0661707672642033</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.997808313033955</Xz>
-                                  <Yx>0.874730870662853</Yx>
+                                  <Yx>0.874730870662854</Yx>
                                   <Yy>-0.481124608439932</Yy>
                                   <Yz>-0.0580087498824796</Yz>
                                 </item>
@@ -22308,7 +22308,7 @@ counter = st[counter_key]
                                   <Xz>-0.998067916786706</Xz>
                                   <Yx>0.861675254575871</Yx>
                                   <Yy>-0.504617019659922</Yy>
-                                  <Yz>-0.0536415801514555</Yz>
+                                  <Yz>-0.0536415801514554</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22321,9 +22321,9 @@ counter = st[counter_key]
                                   <Xx>-0.060292384598219</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.99818075936148</Xz>
-                                  <Yx>0.855052487834601</Yx>
+                                  <Yx>0.8550524878346</Yx>
                                   <Yy>-0.515963001457172</Yy>
-                                  <Yz>-0.0516471119731515</Yz>
+                                  <Yz>-0.0516471119731514</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22366,7 +22366,7 @@ counter = st[counter_key]
                                   <Xx>-0.0553721105329405</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.998465787784002</Xz>
-                                  <Yx>0.834915270109345</Yx>
+                                  <Yx>0.834915270109344</Yx>
                                   <Yy>-0.548427398277363</Yy>
                                   <Yz>-0.0463020578048445</Yz>
                                 </item>
@@ -22413,7 +22413,7 @@ counter = st[counter_key]
                                   <Xz>-0.998688782236937</Xz>
                                   <Yx>0.814544912666703</Yx>
                                   <Yy>-0.578595899236219</Yy>
-                                  <Yz>-0.0417536900863175</Yz>
+                                  <Yz>-0.0417536900863176</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22518,7 +22518,7 @@ counter = st[counter_key]
                                   <Xz>-0.999052331932464</Xz>
                                   <Yx>0.767103444014998</Yx>
                                   <Yy>-0.640652333631062</Yy>
-                                  <Yz>-0.0334199580102121</Yz>
+                                  <Yz>-0.0334199580102122</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22666,9 +22666,9 @@ counter = st[counter_key]
                                   <Xx>-0.0704779342459364</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.997513338649878</Xz>
-                                  <Yx>0.777238851920982</Yx>
+                                  <Yx>0.777238851920981</Yx>
                                   <Yy>-0.626804704878886</Yy>
-                                  <Yz>-0.0549147430682137</Yz>
+                                  <Yz>-0.0549147430682136</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22683,7 +22683,7 @@ counter = st[counter_key]
                                   <Xz>-0.997365767867592</Xz>
                                   <Yx>0.785808692730646</Yx>
                                   <Yy>-0.615823470215975</Yy>
-                                  <Yz>-0.0571502577431408</Yz>
+                                  <Yz>-0.0571502577431409</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22788,7 +22788,7 @@ counter = st[counter_key]
                                   <Xz>-0.995836275781967</Xz>
                                   <Yx>0.845628443670514</Yx>
                                   <Yy>-0.528129039304724</Yy>
-                                  <Yz>-0.0774096447379338</Yz>
+                                  <Yz>-0.0774096447379339</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22800,7 +22800,7 @@ counter = st[counter_key]
                                   <Oz>0.574958166107016</Oz>
                                   <Xx>-0.0946259909423112</Xx>
                                   <Xy>0</Xy>
-                                  <Xz>-0.995512893858329</Xz>
+                                  <Xz>-0.99551289385833</Xz>
                                   <Yx>0.853964673312994</Yx>
                                   <Yy>-0.513960628661909</Yy>
                                   <Yz>-0.0811714784815923</Yz>
@@ -22818,7 +22818,7 @@ counter = st[counter_key]
                                   <Xz>-0.99515025372592</Xz>
                                   <Yx>0.862190449359647</Yx>
                                   <Yy>-0.499364096202487</Yy>
-                                  <Yz>-0.0852239899141288</Yz>
+                                  <Yz>-0.0852239899141287</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22848,7 +22848,7 @@ counter = st[counter_key]
                                   <Xz>-0.994280126171997</Xz>
                                   <Yx>0.878213718448594</Yx>
                                   <Yy>-0.468872446728022</Yy>
-                                  <Yz>-0.0943360664219789</Yz>
+                                  <Yz>-0.0943360664219786</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22863,7 +22863,7 @@ counter = st[counter_key]
                                   <Xz>-0.99375485949023</Xz>
                                   <Yx>0.885956068937845</Yx>
                                   <Yy>-0.452973934349034</Yy>
-                                  <Yz>-0.0994809464800026</Yz>
+                                  <Yz>-0.0994809464800029</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -22908,7 +22908,7 @@ counter = st[counter_key]
                                   <Xz>-0.991660813932958</Xz>
                                   <Yx>0.907707444917673</Yx>
                                   <Yy>-0.402680408305808</Yy>
-                                  <Yz>-0.117964754090779</Yz>
+                                  <Yz>-0.117964754090778</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23013,7 +23013,7 @@ counter = st[counter_key]
                                   <Xz>-0.979553450024337</Xz>
                                   <Yx>0.942830305464134</Yx>
                                   <Yy>-0.271245059446182</Yy>
-                                  <Yz>-0.193641764153409</Yz>
+                                  <Yz>-0.193641764153408</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23056,9 +23056,9 @@ counter = st[counter_key]
                                   <Xx>-0.263701498020156</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.96460433336261</Xz>
-                                  <Yx>0.943054630343647</Yx>
+                                  <Yx>0.943054630343646</Yx>
                                   <Yy>-0.210194721136172</Yy>
-                                  <Yz>-0.257810285663499</Yz>
+                                  <Yz>-0.2578102856635</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23086,7 +23086,7 @@ counter = st[counter_key]
                                   <Xx>-0.331029339592458</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.943620462012657</Xz>
-                                  <Yx>0.930077877024649</Yx>
+                                  <Yx>0.93007787702465</Yx>
                                   <Yy>-0.16881198280041</Yy>
                                   <Yz>-0.326278496276287</Yz>
                                 </item>
@@ -23103,7 +23103,7 @@ counter = st[counter_key]
                                   <Xz>-0.925678944715402</Xz>
                                   <Yx>0.915455637654926</Yx>
                                   <Yy>-0.148210197111968</Yy>
-                                  <Yz>-0.374131945919945</Yz>
+                                  <Yz>-0.374131945919944</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23130,10 +23130,10 @@ counter = st[counter_key]
                                   <Oz>1.67499125281101</Oz>
                                   <Xx>-0.520717408241417</Xx>
                                   <Xy>0</Xy>
-                                  <Xz>-0.853729102675048</Xz>
+                                  <Xz>-0.853729102675047</Xz>
                                   <Yx>0.848713265259634</Yx>
                                   <Yy>-0.108240016176347</Yy>
-                                  <Yz>-0.517658084328327</Yz>
+                                  <Yz>-0.517658084328328</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23203,10 +23203,10 @@ counter = st[counter_key]
                                   <Ox>0.325005389068875</Ox>
                                   <Oy>-0.254625953311608</Oy>
                                   <Oz>1.92500205257389</Oz>
-                                  <Xx>-0.935132932747343</Xx>
+                                  <Xx>-0.935132932747344</Xx>
                                   <Xy>0</Xy>
                                   <Xz>0.354297047816309</Xz>
-                                  <Yx>-0.353647682493332</Yx>
+                                  <Yx>-0.353647682493331</Yx>
                                   <Yy>-0.0605169023070581</Yy>
                                   <Yz>-0.933418995522511</Yz>
                                 </item>
@@ -23280,10 +23280,10 @@ counter = st[counter_key]
                                   <Oz>1.82502801465276</Oz>
                                   <Xx>-0.296406563028492</Xx>
                                   <Xy>0</Xy>
-                                  <Xz>0.955061856318027</Xz>
-                                  <Yx>-0.92059577958613</Yx>
+                                  <Xz>0.955061856318028</Xz>
+                                  <Yx>-0.920595779586129</Yx>
                                   <Yy>-0.266220325208643</Yy>
-                                  <Yz>-0.285709903668058</Yz>
+                                  <Yz>-0.285709903668057</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23313,7 +23313,7 @@ counter = st[counter_key]
                                   <Xz>0.931046698536971</Xz>
                                   <Yx>-0.908465351777714</Yx>
                                   <Yy>-0.218904542660747</Yy>
-                                  <Yz>-0.356049864235171</Yz>
+                                  <Yz>-0.356049864235172</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23401,7 +23401,7 @@ counter = st[counter_key]
                                   <Xx>-0.880037812478571</Xx>
                                   <Xy>0</Xy>
                                   <Xz>0.474903620335675</Xz>
-                                  <Yx>-0.472862131985741</Yx>
+                                  <Yx>-0.472862131985742</Yx>
                                   <Yy>-0.092622922125271</Yy>
                                   <Yz>-0.876254756581027</Yz>
                                 </item>
@@ -23490,10 +23490,10 @@ counter = st[counter_key]
                                   <Oz>1.12498650436352</Oz>
                                   <Xx>-0.561879928606157</Xx>
                                   <Xy>0</Xy>
-                                  <Xz>-0.827218801665884</Xz>
+                                  <Xz>-0.827218801665883</Xz>
                                   <Yx>0.818576307046214</Yx>
                                   <Yy>-0.14417403250622</Yy>
-                                  <Yz>-0.556009602339273</Yz>
+                                  <Yz>-0.556009602339274</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23583,7 +23583,7 @@ counter = st[counter_key]
                                   <Xz>-0.961192047709122</Xz>
                                   <Yx>0.921478034788683</Yx>
                                   <Yy>-0.284478092967629</Yy>
-                                  <Yz>-0.264481466313781</Yz>
+                                  <Yz>-0.264481466313782</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23596,7 +23596,7 @@ counter = st[counter_key]
                                   <Xx>-0.25328199893017</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.967392489643132</Xz>
-                                  <Yx>0.920505921221374</Yx>
+                                  <Yx>0.920505921221373</Yx>
                                   <Yy>-0.307546524261928</Yy>
                                   <Yz>-0.241006191644112</Yz>
                                 </item>
@@ -23641,9 +23641,9 @@ counter = st[counter_key]
                                   <Xx>-0.202927156400499</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.979193836375213</Xz>
-                                  <Yx>0.908085034146318</Yx>
+                                  <Yx>0.908085034146317</Yx>
                                   <Yy>-0.374120106598338</Yy>
-                                  <Yz>-0.188190638976357</Yz>
+                                  <Yz>-0.188190638976358</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23688,7 +23688,7 @@ counter = st[counter_key]
                                   <Xz>-0.985612459801768</Xz>
                                   <Yx>0.887044824956659</Yx>
                                   <Yy>-0.435903278017277</Yy>
-                                  <Yz>-0.152117752847599</Yz>
+                                  <Yz>-0.152117752847598</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23718,7 +23718,7 @@ counter = st[counter_key]
                                   <Xz>-0.988378484620206</Xz>
                                   <Yx>0.870213612607111</Yx>
                                   <Yy>-0.474146942725499</Yy>
-                                  <Yz>-0.133839251108721</Yz>
+                                  <Yz>-0.13383925110872</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23748,7 +23748,7 @@ counter = st[counter_key]
                                   <Xz>-0.990420427567882</Xz>
                                   <Yx>0.851953615126374</Yx>
                                   <Yy>-0.509967102759</Yy>
-                                  <Yz>-0.118779593267081</Yz>
+                                  <Yz>-0.118779593267082</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23791,9 +23791,9 @@ counter = st[counter_key]
                                   <Xx>-0.121368485683419</Xx>
                                   <Xy>0</Xy>
                                   <Xz>-0.99260752096834</Xz>
-                                  <Yx>0.822909197559813</Yx>
+                                  <Yx>0.822909197559812</Yx>
                                   <Yy>-0.559192503369793</Yy>
-                                  <Yz>-0.100619067509542</Yz>
+                                  <Yz>-0.100619067509541</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23808,7 +23808,7 @@ counter = st[counter_key]
                                   <Xz>-0.993172571306926</Xz>
                                   <Yx>0.812964844918561</Yx>
                                   <Yy>-0.574430354899983</Yy>
-                                  <Yz>-0.0954878437080841</Yz>
+                                  <Yz>-0.0954878437080844</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -23823,7 +23823,7 @@ counter = st[counter_key]
                                   <Xz>-0.993675331873146</Xz>
                                   <Yx>0.802948449735265</Yx>
                                   <Yy>-0.589101350239269</Yy>
-                                  <Yz>-0.0907380086513035</Yz>
+                                  <Yz>-0.0907380086513038</Yz>
                                 </item>
                               </items>
                             </chunk>
@@ -24267,7 +24267,7 @@ pts = points[:counter+1]</item>
                         <item name="Name" type_name="gh_string" type_code="10">Geometry</item>
                         <item name="NickName" type_name="gh_string" type_code="10">G</item>
                         <item name="Optional" type_name="gh_bool" type_code="1">false</item>
-                        <item name="Source" index="0" type_name="gh_guid" type_code="9">09efd91c-b32b-4d75-a9a6-484ecd982175</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">a6543d50-8e90-4db8-a137-eac40018a844</item>
                         <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
                       </items>
                       <chunks count="1">
@@ -24681,7 +24681,7 @@ pts = points[:counter+1]</item>
                         <item name="Max" type_name="gh_double" type_code="6">100</item>
                         <item name="Min" type_name="gh_double" type_code="6">0</item>
                         <item name="SnapCount" type_name="gh_int32" type_code="3">0</item>
-                        <item name="Value" type_name="gh_double" type_code="6">18</item>
+                        <item name="Value" type_name="gh_double" type_code="6">28</item>
                       </items>
                     </chunk>
                   </chunks>
@@ -25121,6 +25121,230 @@ pts = points[:counter+1]</item>
                 </chunk>
               </chunks>
             </chunk>
+            <chunk name="Object" index="92">
+              <items count="2">
+                <item name="GUID" type_name="gh_guid" type_code="9">3fba11d5-b30a-4146-8d80-d591e7a0a287</item>
+                <item name="Name" type_name="gh_string" type_code="10">Triangulate</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="5">
+                    <item name="Description" type_name="gh_string" type_code="10">Triangulate all quads in a mesh</item>
+                    <item name="Hidden" type_name="gh_bool" type_code="1">true</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">16464cce-cdb1-48f2-8f4b-d9a4b27d8614</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Triangulate</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Tri</item>
+                  </items>
+                  <chunks count="4">
+                    <chunk name="Attributes">
+                      <items count="2">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>2052</X>
+                          <Y>498</Y>
+                          <W>71</W>
+                          <H>44</H>
+                        </item>
+                        <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                          <X>2086</X>
+                          <Y>520</Y>
+                        </item>
+                      </items>
+                    </chunk>
+                    <chunk name="param_input" index="0">
+                      <items count="7">
+                        <item name="Description" type_name="gh_string" type_code="10">Mesh to triangulate</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">36cf4616-09ef-4bcc-b9dd-b6c5a3fc5d48</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Mesh</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">M</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">09efd91c-b32b-4d75-a9a6-484ecd982175</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>2054</X>
+                              <Y>500</Y>
+                              <W>17</W>
+                              <H>40</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>2064</X>
+                              <Y>520</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="0">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Mesh with only triangle faces</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">73e184d2-364f-40c5-ac5c-39a9dd585ffa</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Mesh</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">M</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>2101</X>
+                              <Y>500</Y>
+                              <W>20</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>2111</X>
+                              <Y>510</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="1">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Number of quads that were triangulated</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">0a637e41-e7e2-4700-a8fb-b82ddd879b82</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Count</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">N</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>2101</X>
+                              <Y>520</Y>
+                              <W>20</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>2111</X>
+                              <Y>530</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
+            <chunk name="Object" index="93">
+              <items count="2">
+                <item name="GUID" type_name="gh_guid" type_code="9">3fba11d5-b30a-4146-8d80-d591e7a0a287</item>
+                <item name="Name" type_name="gh_string" type_code="10">Triangulate</item>
+              </items>
+              <chunks count="1">
+                <chunk name="Container">
+                  <items count="5">
+                    <item name="Description" type_name="gh_string" type_code="10">Triangulate all quads in a mesh</item>
+                    <item name="Hidden" type_name="gh_bool" type_code="1">true</item>
+                    <item name="InstanceGuid" type_name="gh_guid" type_code="9">c10f45cc-bc18-4ba7-a466-5e6eeec7cfe6</item>
+                    <item name="Name" type_name="gh_string" type_code="10">Triangulate</item>
+                    <item name="NickName" type_name="gh_string" type_code="10">Tri</item>
+                  </items>
+                  <chunks count="4">
+                    <chunk name="Attributes">
+                      <items count="2">
+                        <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                          <X>1779</X>
+                          <Y>613</Y>
+                          <W>71</W>
+                          <H>44</H>
+                        </item>
+                        <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                          <X>1813</X>
+                          <Y>635</Y>
+                        </item>
+                      </items>
+                    </chunk>
+                    <chunk name="param_input" index="0">
+                      <items count="7">
+                        <item name="Description" type_name="gh_string" type_code="10">Mesh to triangulate</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">abadf686-232b-475b-90bd-f2cb1b8aca6d</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Mesh</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">M</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="Source" index="0" type_name="gh_guid" type_code="9">09efd91c-b32b-4d75-a9a6-484ecd982175</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">1</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>1781</X>
+                              <Y>615</Y>
+                              <W>17</W>
+                              <H>40</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1791</X>
+                              <Y>635</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="0">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Mesh with only triangle faces</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">a6543d50-8e90-4db8-a137-eac40018a844</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Mesh</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">M</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>1828</X>
+                              <Y>615</Y>
+                              <W>20</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1838</X>
+                              <Y>625</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                    <chunk name="param_output" index="1">
+                      <items count="6">
+                        <item name="Description" type_name="gh_string" type_code="10">Number of quads that were triangulated</item>
+                        <item name="InstanceGuid" type_name="gh_guid" type_code="9">cd607b25-7834-494e-be89-231b8b6592d0</item>
+                        <item name="Name" type_name="gh_string" type_code="10">Count</item>
+                        <item name="NickName" type_name="gh_string" type_code="10">N</item>
+                        <item name="Optional" type_name="gh_bool" type_code="1">false</item>
+                        <item name="SourceCount" type_name="gh_int32" type_code="3">0</item>
+                      </items>
+                      <chunks count="1">
+                        <chunk name="Attributes">
+                          <items count="2">
+                            <item name="Bounds" type_name="gh_drawing_rectanglef" type_code="35">
+                              <X>1828</X>
+                              <Y>635</Y>
+                              <W>20</W>
+                              <H>20</H>
+                            </item>
+                            <item name="Pivot" type_name="gh_drawing_pointf" type_code="31">
+                              <X>1838</X>
+                              <Y>645</Y>
+                            </item>
+                          </items>
+                        </chunk>
+                      </chunks>
+                    </chunk>
+                  </chunks>
+                </chunk>
+              </chunks>
+            </chunk>
           </chunks>
         </chunk>
       </chunks>
@@ -25128,7 +25352,7 @@ pts = points[:counter+1]</item>
     <chunk name="Thumbnail">
       <items count="1">
         <item name="Thumbnail" type_name="gh_drawing_bitmap" type_code="37">
-          <bitmap length="8678">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</bitmap>
+          <bitmap length="10003">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jBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISAgzSkQkhBklIhLCjBIRCWFGiYiEMKNEREKYUSIiIcwoEZEQZpSISMhLGSUiot9Bl1EiIvqd/vSn/w9TX8hQcAX12gAAAABJRU5ErkJggg==</bitmap>
         </item>
       </items>
     </chunk>
