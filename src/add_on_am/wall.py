@@ -123,17 +123,17 @@ class Map2d:
         self.resolution = resolution
         self.x_size = int(wall.width / resolution) + 1
         self.wall = wall
-        self.length = 0
 
     def create_network(self, envelope):
-        reach = int((envelope.r_out - envelope.r_in) / self.resolution) + 1
         index = 0
         for i in range(self.x_size):
             x = i*self.resolution
-            y = -self.wall.sin_wave(self.wall.down_amp, self.wall.down_freq, self.wall.down_phase, x)
-            for j in range(reach):
-                y_l = y + envelope.r_in + j*self.resolution
-                y_r = y - envelope.r_in - j*self.resolution
+            y_down = -self.wall.sin_wave(self.wall.down_amp, self.wall.down_freq, self.wall.down_phase, x)
+            y_up = -self.wall.sin_wave(self.wall.up_amp, self.wall.up_freq, self.wall.up_phase, x)
+            dynamic_reach = int((envelope.r_out - envelope.r_in + abs(y_down-y_up)) / self.resolution) + 1
+            for j in range(dynamic_reach):
+                y_l = y_down + envelope.r_in + j*self.resolution
+                y_r = y_down - envelope.r_in - j*self.resolution
                 attr_dict = {
                     'x':x, 'y':y_l, 'z':0,
                     "ri": 0,
@@ -148,7 +148,6 @@ class Map2d:
                     }
                 self.network.add_node(key=index, attr_dict=attr_dict)
                 index += 1
-        self.length = index
         return self.network
     
     def assign_reach(self, envelope):
@@ -221,7 +220,7 @@ class Map2d_optimized(Map2d):
             dist = self.resolution
         new_res = dist/size
         print("resolution: ", new_res, size)
-        index = self.length + 1
+        index = self.network.number_of_nodes() + 1
         for i in range(size):
             x_l = pos_x + i* new_res
             x_r = pos_x - i* new_res
@@ -266,14 +265,13 @@ class Map2d_optimized(Map2d):
                         }
                     self.network.add_node(key=index, attr_dict=attr_dict)
                     index += 1
-        self.length = index
     
 
     # finding the the ideal position out of an envelope of positions from all positions and from a given starting node
     def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, dist=None, ri_calc="linear", ri_threshold=0):
-        start_pos = self.length + 1
+        start_pos = self.network.number_of_nodes() + 1
         self.add_to_network(current_pos, envelope, dist)
-        positions = self.network.nodes()
+        positions = list(self.network.nodes())
         reachable_points = []
         # run is used to skip until the start node for this section of the path
         run = False
@@ -297,6 +295,7 @@ class Map2d_optimized(Map2d):
                     if inside and ri > ri_threshold:
                         reachable_pos.append(pos)
                     elif inside and ri <= ri_threshold:
+                        # wrong, checks for wrong node
                         if self.check_pose(node, reachability_map, kd, envelope):
                             reachable_pos.append(pos)
 
@@ -358,6 +357,7 @@ class Map2d_optimized(Map2d):
                 if inside and ri > ri_threshold:
                     reachable_pos.append(pos)
                 elif inside and ri <= ri_threshold:
+                    # wrong, checks for wrong node
                     if self.check_pose(node, reachability_map, kd, envelope):
                         reachable_pos.append(pos)
 
@@ -395,7 +395,6 @@ class Map2d_optimized(Map2d):
         # optimization for last one not necessary as there is a whole envelope of points that works
         # ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[-1], reachable_points)
         reach[positions[-1]] = reachable_points
-
         return reach, positions, positions_list
     
 

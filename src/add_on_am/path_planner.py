@@ -72,6 +72,7 @@ class SurfacePathPlanner():
         for index in self.mesh.faces():
             self.add_node(index)
 
+
     def add_node(self, index, attr_dict={}, **kwattr):
         point = self.mesh.face_center(index)
         normal = self.mesh.face_normal(index)
@@ -111,7 +112,7 @@ class SurfacePathPlanner():
         norm = Vector.from_data(self.network.node_attributes(key=node, names=['vx','vy','vz']))
         if flip:
             norm = norm.inverted()
-        v1 = cross_vectors(norm, Vector.Yaxis()) # Zaxis
+        v1 = cross_vectors(norm, Vector.Zaxis()) # Zaxis
         v2 = cross_vectors(norm,v1)
         frame = Frame(Point.from_data(self.network.node_coordinates(node)), v1, v2)
         self.network.node_attribute(key=node, name='frame', value=frame)
@@ -318,6 +319,36 @@ class SurfacePathPlanner():
             current = following
             print(current)
         return self.network, n
+    
+
+    def from_heat_method(self, points):
+        if self.mesh == None:
+            raise ValueError
+        mesh_face_centers = [self.mesh.face_center(index) for index in self.mesh.faces()]
+        kd = KDTree(mesh_face_centers)
+        for index, point in enumerate(points):
+            p, node_index, dist = kd.nearest_neighbor(point)
+            normal = self.mesh.face_normal(node_index)
+            attr_dict = {
+                'x':point[0], 'y':point[1], 'z':point[2],
+                'vx':normal[0], 'vy':normal[1], 'vz':normal[2],
+                'force': 0,
+                'sphere':None,
+                'frame':None,
+                'thickness':0.0,
+                'radius':0.0,
+                'area':0.0,
+                'velocity':0.0,
+                'nozzle_distance':0.0,
+                'tool_frame':None
+            }
+            self.network.add_node(key=index, attr_dict=attr_dict)
+            self.network.path.append(index)
+            if index != 0:
+                self.network.add_edge(index-1, index)
+            print(index)
+        return self.network
+
 
 
     def move_to_closest(self, current):
