@@ -219,7 +219,7 @@ class Map2d_optimized(Map2d):
         if dist == None:
             dist = self.resolution
         new_res = dist/size
-        print("resolution: ", new_res, size)
+        # print("resolution: ", new_res, size)
         index = self.network.number_of_nodes() + 1
         for i in range(size):
             x_l = pos_x + i* new_res
@@ -268,8 +268,8 @@ class Map2d_optimized(Map2d):
     
 
     # finding the the ideal position out of an envelope of positions from all positions and from a given starting node
-    def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, dist=None, ri_calc="linear", ri_threshold=0):
-        start_pos = self.network.number_of_nodes() + 1
+    def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, pos_list, dist=None, ri_calc="linear", ri_threshold=0):
+        start_pos = self.network.number_of_nodes()
         self.add_to_network(current_pos, envelope, dist)
         positions = list(self.network.nodes())
         reachable_points = []
@@ -283,7 +283,7 @@ class Map2d_optimized(Map2d):
             reachable_pos = []
             # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
             for pos in positions:
-                if pos >= start_pos:
+                if pos > start_pos:
                     [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
                     [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
                     if ri_calc == "linear":
@@ -300,16 +300,20 @@ class Map2d_optimized(Map2d):
                             reachable_pos.append(pos)
 
             if len(reachable_pos) == 0:
+                if not node in pos_list.keys():
+                    pos_list[node] = positions[0]
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
-                return positions[0], reachable_pos
+                return positions[0], reachable_points, pos_list
             else:
                 positions = reachable_pos
                 reachable_points.append(node)
-        return positions[-1], reachable_pos
+                if not node in pos_list.keys():
+                    pos_list[node] = positions
+        return positions[0], reachable_points, pos_list
     
 
     # optimizing the position from a given position by adding a finder grid of positions around the given position
-    def optimize_pos(self, planner, envelope, reachability_map, kd, ideal_pos, reachable_points, loops=3):
+    def optimize_pos(self, planner, envelope, reachability_map, kd, ideal_pos, reachable_points, pos_list, loops=3):
         for i in range(loops):
             if i > 0:
                 res = self.resolution/(i*3)
@@ -317,18 +321,22 @@ class Map2d_optimized(Map2d):
                 res = self.resolution
             # first optimization step (res = self.resolution / 3 = 0.1333)
             # second optimization step (res = self.resolution / 9 = 0.0444)
-            improved_pos, improved_points = self.pos_by_path_limited(planner, envelope, reachability_map, kd, ideal_pos, reachable_points[0], res)
+            print(ideal_pos)
+            improved_pos, improved_points, improved_pos_list = self.pos_by_path_limited(planner, envelope, reachability_map, kd, ideal_pos, reachable_points[0], pos_list, res)
+            print(reachable_points[-1], improved_points[-1])
+            print("old positions: " + str(len(pos_list)) + " opt positions: " + str(len(improved_pos_list)))
             if len(improved_points) > len(reachable_points):
                 ideal_pos = improved_pos
                 reachable_points = improved_points
-        return ideal_pos, reachable_points
+                pos_list = improved_pos_list
+        return ideal_pos, reachable_points, pos_list
     
 
     # finding the ideal positions to print as much as possible of the continous path
     def pos_by_path(self, planner, envelope, reachability_map=None, ri_calc="linear", ri_threshold=0):
         reach = {}
-        positions_list = []
         positions = list(self.network.nodes())
+        positions_list = {"start": positions}
         reachable_points = []
         if reachability_map:
             kd = KDTree(reachability_map.points)
@@ -336,12 +344,16 @@ class Map2d_optimized(Map2d):
             kd = None
         # run is used to skip the nodes after the optimization
         run = True
-        last_node = None
+        last_node = 0
         for node in planner.network.path:
-            if node == last_node:
+            # print(run, node, last_node)
+            if planner.network.path.index(node) == planner.network.path.index(last_node) and node > 0:
                 run = True
                 continue
-            if not run:
+            elif planner.network.path.index(node) > planner.network.path.index(last_node) and not run:
+                print("Node advanced too far")
+                run = True
+            elif not run:
                 continue
             reachable_pos = []
             # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
@@ -363,17 +375,20 @@ class Map2d_optimized(Map2d):
 
 
             if len(reachable_pos) == 0:
-                ideal_pos, reachable_points = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points)
+                ideal_pos, reachable_points, positions_list_opt = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points, positions_list)
+                print("old: " + str(positions[0]) + " opt: " + str(ideal_pos))
+                print("old positions: " + str(len(positions_list)) + " opt positions: " + str(len(positions_list_opt)))
                 # ideal_pos = positions[0]
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
                 reach[ideal_pos] = reachable_points
+                positions_list = positions_list_opt
                 
                 # check if final node is reached
                 if planner.network.path.index(reachable_points[-1])+1 == len(planner.network.path):
                     print("last node: ", last_node, reachable_points[-1])
                     last_node = reachable_points[-1]
                     run = False
-                    return reach, positions
+                    return reach, positions, positions_list
                 # check if advancement was made through optimization and jump to that node
                 elif node != planner.network.path[planner.network.path.index(reachable_points[-1])+1]:
                     print("last node: ", last_node, reachable_points[-1])
@@ -381,12 +396,12 @@ class Map2d_optimized(Map2d):
                     run = False
 
                 positions = list(self.network.nodes())
-                reachable_points = [node]
+                reachable_points = []
             else:
                 positions = reachable_pos
                 reachable_points.append(node)
+                positions_list[node] = positions
             
-            positions_list.append(positions)
             
         
         # for some reason dicts cant be ordered as wanted and are always ordered by length of items, no idea who had this ingenius idea
@@ -394,7 +409,9 @@ class Map2d_optimized(Map2d):
 
         # optimization for last one not necessary as there is a whole envelope of points that works
         # ideal_pos, reachable_points = self.optimize_pos(planner, envelope, positions[-1], reachable_points)
+        # print(positions[-1], reachable_points)
         reach[positions[-1]] = reachable_points
+        print("length: " + str(len(positions_list.keys())) + " " + str(len(set(positions_list.keys()))))
         return reach, positions, positions_list
     
 
