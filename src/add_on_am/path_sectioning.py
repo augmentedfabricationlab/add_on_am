@@ -176,7 +176,6 @@ class SurfacePathPlanner_two():
         nodes = list(self.path_network.nodes_where(conditions))
         if nodes != []:
             vals = [self.path_network.node_attribute(key=k, name=attr_dict['orientation']) for k in nodes]
-            # print(vals)
             fval = func(vals)
             if isinstance(fval, list):
                 fval = fval[attr_dict['idx']]

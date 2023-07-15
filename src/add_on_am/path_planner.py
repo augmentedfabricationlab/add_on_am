@@ -171,6 +171,7 @@ class SurfacePathPlanner():
         #     func = None
 
         nodes = list(self.network.nodes_where(conditions))
+        print(len(nodes))
         if nodes != []:
             vals = [self.network.node_attribute(key=k, name=attr_dict['orientation']) for k in nodes]
             # print(vals)
