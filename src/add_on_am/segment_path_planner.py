@@ -235,7 +235,7 @@ class SegmentPathPlanner():
             # Look for the neighbor with the lowest x/y/z
             self.network.path.append(current)
             neighbornodes = {}
-            print(self.network.node_attribute(key=current, name='neighbors'))
+            # print(self.network.node_attribute(key=current, name='neighbors'))
             for i in self.network.node_attribute(key=current, name='neighbors'):
                 if len(self.network.connected_edges(key=i))==0:
                     neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})

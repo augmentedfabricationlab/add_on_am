@@ -114,6 +114,7 @@ class Map2d_optimized(Map2d):
             dist = self.resolution
         new_res = dist/size
         # print("resolution: ", new_res, size)
+        new_positions = []
         index = self.network.number_of_nodes() + 1
         for i in range(size):
             x_l = pos_x + i* new_res
@@ -131,6 +132,7 @@ class Map2d_optimized(Map2d):
                         "vertices": [],
                         }
                     self.network.add_node(key=index, attr_dict=attr_dict)
+                    new_positions.append(index)
                     index += 1
                 # different x than pos
                 if i!=0 and envelope.r_in < abs(sin_r-y_l) < envelope.r_out:
@@ -140,6 +142,7 @@ class Map2d_optimized(Map2d):
                         "vertices": [],
                         }
                     self.network.add_node(key=index, attr_dict=attr_dict)
+                    new_positions.append(index)
                     index += 1
                 # different j than pos
                 if j!=0 and envelope.r_in < abs(sin_l-y_r) < envelope.r_out:
@@ -149,6 +152,7 @@ class Map2d_optimized(Map2d):
                         "vertices": [],
                         }
                     self.network.add_node(key=index, attr_dict=attr_dict)
+                    new_positions.append(index)
                     index += 1
                 # different y and x than pos
                 if i!=0 and j!=0 and envelope.r_in < abs(sin_r-y_r) < envelope.r_out:
@@ -158,7 +162,9 @@ class Map2d_optimized(Map2d):
                         "vertices": [],
                         }
                     self.network.add_node(key=index, attr_dict=attr_dict)
+                    new_positions.append(index)
                     index += 1
+        return new_positions
     
 
     # finding the the ideal position out of an envelope of positions from all positions and from a given starting node
@@ -371,51 +377,32 @@ class Map2d_optimized(Map2d):
 
 
 class GrowthPositioning(Map2d_optimized):  
-    
-        
-        # # sort by x value and get first half
-        # x_vals = [self.wall_network.node_attribute(key=k, name="x") for k in candidates]
-        # candidates = [candidate for _, candidate in sorted(zip(x_vals, candidates))][:int(len(candidates)/2)]
-        # # sort by z value and return closest to height/2
-        # z_vals = [abs(self.wall_network.node_attribute(key=k, name="z")-self.wall.height/2) for k in candidates]
-        # return candidates[z_vals.index(min(z_vals))]
-
-        # def segment(self, wall_network, envelope, max_depth=100, reachability_map=None):
-        # self.wall_network = wall_network.copy()
-        # counter = 0
-        # self.reachable_nodes = {}
-        # while self.wall_network.number_of_nodes() > 0 and counter < 7:
-        #     start = self.find_pos(Point(0, 0, self.wall.height/2), 3)
-        #     self.growth(start, wall_network, envelope, max_depth=max_depth, reachability_map=reachability_map)
-        #     print("nodes: " + str(self.reachable_nodes.keys()))
-        #     for node in self.reachable_nodes.keys():
-        #         self.wall_network.delete_node(node)
-        #     counter += 1
-        #     print("counter: " + str(counter) + " nodes: " + str(self.wall_network.number_of_nodes()))
-        # self.wall_network = wall_network.copy()
-        # return self.reachable_nodes
-
-    def segment(self, wall_network, envelope, max_depth=100, reachability_map=None):
+    def segment(self, wall_network, envelope, max_depth=100, reachability_map=None, dynamic=False):
         self.wall_network = wall_network.copy()
-        self.reachable_nodes = {}
-        
+        self.nodes_dict = {}
+        self.reachable_nodes = []
+
         start = self.find_pos(Point(0, 0, self.wall.height/2), 3)
+        
+        self.repositioning = [start]
         self.growth(start, wall_network, envelope, max_depth=max_depth, reachability_map=reachability_map)
 
-        # for node in self.reachable_nodes.keys():
-        #     self.wall_network.delete_node(node)
         k = 0
-        while len(self.reachable_nodes.keys()) < self.wall_network.number_of_nodes() and k < 6:
-            start = self.find_pos(Point(0, 0, self.wall.height/2), 4)
+        while len(self.reachable_nodes) < self.wall_network.number_of_nodes() and k < 10:
+ 
+            start = self.find_pos(Point(0, 0, self.wall.height/2), 4, dynamic)
+            self.repositioning.append(start)
             self.growth(start, wall_network, envelope, max_depth=max_depth, reachability_map=reachability_map)
             k += 1
+            print(k)
 
         self.wall_network = wall_network.copy()
-        return self.reachable_nodes
+        return self.nodes_dict, self.reachable_nodes, self.repositioning
 
 
     def growth(self, current, wall_network, envelope, max_depth=100, reachability_map=None):        
         positions = list(self.network.nodes())
+        self.refinement = 0
         current_positions = []
         for pos in positions:
             envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
@@ -423,17 +410,31 @@ class GrowthPositioning(Map2d_optimized):
             if inside:
                 current_positions.append(pos)
         # print("current position: " + str(current) + " " + str(current_positions))
-        self.reachable_nodes[current] = current_positions
+        self.reachable_nodes.append(current)
+        self.nodes_dict[current] = current_positions
         self.recursive_growth([current], current_positions, envelope, max_depth=max_depth)
     
     
-    def find_pos(self, point, neighbors=4):
+    def find_pos(self, point, neighbors=4, dynamic=False):
         # get all nodes with 3 neighbors
         candidates = list(self.wall_network.nodes_where({'number_of_neighbors': neighbors}))
         # find point closest to given point
-        candidates = [candidate for candidate in candidates if candidate not in self.reachable_nodes.keys()]
+        candidates = [candidate for candidate in candidates if candidate not in self.reachable_nodes]
+        if candidates == []:
+            candidates = list(self.wall_network.nodes())
+            candidates = [candidate for candidate in candidates if candidate not in self.reachable_nodes]
+        if dynamic:
+            # get farthest point on x between height/2 +- 0.1
+            candidates_line = [candidate for candidate in candidates if self.wall_network.node_attribute(key=candidate, name="z") < self.wall.height/2 + 0.1 and self.wall_network.node_attribute(key=candidate, name="z") > self.wall.height/2 - 0.1]
+            if candidates_line != []:
+                x_vals = [self.wall_network.node_attribute(key=k, name="x") for k in candidates_line]
+                k = x_vals.index(min(x_vals))
+                return candidates_line[k]
+        
+        print("candidates: ", len(candidates), len(self.reachable_nodes), self.wall_network.number_of_nodes())
         kd = KDTree([Point(*self.wall_network.node_coordinates(i)) for i in candidates])
         p, k, dist = kd.nearest_neighbor(point)
+
         return candidates[k]
 
 
@@ -442,7 +443,7 @@ class GrowthPositioning(Map2d_optimized):
         next_nodes = []
         for current in nodes:   
             neighbors = self.wall_network.node_attribute(key=current, name="neighbors")
-            neighbors = [neighbor for neighbor in neighbors if neighbor not in self.reachable_nodes.keys()]
+            neighbors = [neighbor for neighbor in neighbors if neighbor not in self.reachable_nodes]
             if neighbors == []:
                 continue
             # sort neighbors by x value
@@ -451,70 +452,48 @@ class GrowthPositioning(Map2d_optimized):
             for neighbor in neighbors:
                 neighbor_positions = []
                 # check if neighbor is already in reachable nodes
-                if neighbor in self.reachable_nodes.keys() or neighbor in nodes:
+                if neighbor in self.reachable_nodes or neighbor in nodes:
                     continue
                 for pos in last_positions:
                     envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
                     inside = envelope.point_inside(*self.wall_network.node_coordinates(neighbor))
                     if inside:
                         neighbor_positions.append(pos)
+                if neighbor_positions == [] and self.refinement < 4:
+                    neighbor_positions = self.optimize_pos(envelope, last_positions[0])
                 if neighbor_positions != []:
                     next_nodes.append(neighbor)
-                    self.reachable_nodes[neighbor] = neighbor_positions
+                    self.reachable_nodes.append(neighbor)
+                    self.nodes_dict[neighbor] = neighbor_positions
                     last_positions = neighbor_positions
+        
+
 
         if depth < max_depth and next_nodes != []:
-            # positions = set(self.reachable_nodes[next_nodes[0]])
-            # for i, node in enumerate(next_nodes[1:]):
-            #     new_positions = positions.intersection(self.reachable_nodes[node])
-            #     if len(new_positions) == 0:
-            #         positions = positions[0]
-            #     elif len(new_positions) == 1:
-
             self.recursive_growth(next_nodes, last_positions, envelope, max_depth=max_depth, depth=depth)
 
-# def recursive_grow(self, current, envelope, max_depth, depth=0):
-#     # get neighbors of current node
-#     depth += 1
-#     neighbors = self.wall_network.node_attribute(key=current, name="neighbors")
-#     # sort neighbors by x value
-#     x_vals = [self.wall_network.node_attribute(key=k, name="x") for k in neighbors]
-#     neighbors = [neighbor for _, neighbor in sorted(zip(x_vals, neighbors))]
-#     for neighbor in neighbors:
-#         # check if neighbor is already in reachable nodes
-#         if neighbor in self.reachable_nodes.keys():
-#             continue
-        
-#         positions = []
-#         # check if neighbor is in envelope
-#         for pos in self.reachable_nodes[current]:
-#             envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
-#             inside = envelope.point_inside(*self.wall_network.node_coordinates(neighbor))
-#             if inside:
-#                 positions.append(pos)
-#         # if neighbor is in envelope add to reachable nodes and grow from there
-#         print(depth, max_depth, neighbor)
-#         if positions != [] and depth < max_depth:
-#             self.reachable_nodes[neighbor] = positions
-#             self.recursive_grow(neighbor, envelope, max_depth=max_depth, depth=depth)
-#         elif depth >= max_depth:
-#             print("max depth reached")
-#             return
+    # optimizing the position from a given position by adding a finder grid of positions around the given position
+    def optimize_pos(self, envelope, position):
+        if self.refinement > 2:
+            return []
+        if self.refinement == 0:
+            res = self.resolution
+        else:
+            res = self.resolution/(self.refinement*3)
+        self.refinement += 1
+        # first optimization step (res = self.resolution / 3 = 0.1333)
+        # second optimization step (res = self.resolution / 9 = 0.0444)
+        new_pos = self.add_to_network(position, envelope, res)
+        new_pos.append(position)
+        for node in self.reachable_nodes[self.repositioning[-1]:]:
+            last_pos = []
+            for pos in new_pos:
+                envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
+                inside = envelope.point_inside(*self.wall_network.node_coordinates(node))
+                if inside:
+                    last_pos.append(pos)
+            new_pos = last_pos
+        print("refinement", position, new_pos)
 
-# def growth(self, wall_network, envelope, max_depth, reachability_map=None):
-#     self.wall_network = wall_network
-#     positions = list(self.network.nodes())
-#     current = self.find_pos(Point(0, 0, self.wall.height/2), 3)
-    
-#     current_positions = []
-#     for pos in positions:
-#         envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
-#         inside = envelope.point_inside(*self.wall_network.node_coordinates(pos))
-#         if inside:
-#             current_positions.append(pos)
-#     print("current position: " + str(current) + " " + str(current_positions))
-#     self.reachable_nodes = {current: current_positions}
-#     self.recursive_grow(current, envelope, max_depth=max_depth)
-#     return self.reachable_nodes
-
+        return new_pos
     
