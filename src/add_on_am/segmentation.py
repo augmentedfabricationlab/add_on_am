@@ -1,5 +1,5 @@
 from compas.datastructures import Mesh, Network
-from compas.geometry import Point, KDTree, Plane, Frame
+from compas.geometry import Point, KDTree, Plane, Frame, Vector, cross_vectors
 from collections import OrderedDict
 from operator import itemgetter
 import math
@@ -364,16 +364,26 @@ class Map2d_optimized(Map2d):
         return Frame.from_plane(Plane(Point(x, y, z), normal))
     
     # returns poses of all nodes that are poses ordered along the path
-    def poses(self, nodes, planner, pos):
+    def poses(self, network, pos):
         # if pos is on other side flip normals
         flip = False
-        if pos.Y < planner.network.node_attribute(nodes[0], "y"):
+        if pos.Y < network.node_attribute(network.path[0], "y"):
             flip = True
 
         frames = []
-        for node in nodes:
-            frames.append(planner.set_node_frame(node, flip))        
+        for node in network.path:
+            frames.append(self.set_node_frame(network, node, flip))        
         return frames
+    
+    def set_node_frame(self, network, node, flip):
+        norm = Vector.from_data(network.node_attributes(key=node, names=['vx','vy','vz']))
+        if flip:
+            norm = norm.inverted()
+        v1 = cross_vectors(norm, Vector.Zaxis()) # Zaxis
+        v2 = cross_vectors(norm,v1)
+        frame = Frame(Point.from_data(network.node_coordinates(node)), v1, v2)
+        network.node_attribute(key=node, name='frame', value=frame)
+        return frame
 
 
 class GrowthPositioning(Map2d_optimized):  
@@ -496,4 +506,39 @@ class GrowthPositioning(Map2d_optimized):
         print("refinement", position, new_pos)
 
         return new_pos
+    
+    def plan_path(self, nodes, distance=0.05):
+        # list of nodes with z below distance and in nodes
+        lowest_nodes = [node for node in nodes if self.wall_network.node_attribute(key=node, name="z") < distance]
+        # start equals node with min(x)
+        x_vals = [self.wall_network.node_attribute(key=k, name="x") for k in nodes]
+        current = nodes[x_vals.index(min(x_vals))]
+        # loop over all the nodes and build path with horizontal lines from left to right
+        path = [current]
+        self.wall_network.path = [current]
+        for _ in nodes:
+            if set(path) == set(nodes):
+                print("finished path")
+                break
+            neighbors = self.wall_network.node_attribute(key=current, name="neighbors")
+            # choose neighbor with lowest z that is in nodes, but not in path
+            neighbors = [neighbor for neighbor in neighbors if neighbor in nodes and neighbor not in path and self.wall_network.node_attribute(key=neighbor, name="z") - self.wall_network.node_attribute(key=current, name="z") < distance/2]
+            if neighbors == []:
+                # if no neighbor is in nodes, choose node with lowest z and max or min x
+                z_vals = [self.wall_network.node_attribute(key=node, name="z") for node in nodes if node not in path]
+                z_threshold = min(z_vals) + distance/2
+                next_nodes = [node for node in nodes if node not in path and self.wall_network.node_attribute(key=node, name="z") < z_threshold]
+                x_vals = [self.wall_network.node_attribute(key=node, name="x") for node in next_nodes] 
+                end_nodes = [next_nodes[x_vals.index(min(x_vals))], next_nodes[x_vals.index(max(x_vals))]]
+                # choose node that is closer to current
+                delta_x_vals = [abs(self.wall_network.node_attribute(key=node, name="x")-self.wall_network.node_attribute(key=current, name="x")) for node in end_nodes]
+                next_n = end_nodes[delta_x_vals.index(min(delta_x_vals))]
+            else:
+                next_n = neighbors[0]
+            self.wall_network.add_edge(current, next_n)
+            self.wall_network.path.append(next_n)
+            path.append(next_n)
+            current = next_n
+        return path
+            
     

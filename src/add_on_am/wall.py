@@ -49,7 +49,7 @@ class Wall(object):
                 b = a + self.z_size
                 c = b + 1
                 d = a + 1
-                self.mesh.add_face([a, b, c, d])
+                self.mesh.add_face(vertices=[a, b, c, d], i=i, j=j)
 
     
     def window(self, a=(0.8, 1.2), b=(1.2, 0.8)):
@@ -114,6 +114,208 @@ class Wall(object):
         mesher.shift_nodes()
         distances = mesher.distances()
         return mesher.mesh
+    
+    def shift_nodes_two(self, resolution=0.1, selected_nodes=[]):
+        mesh_dict = self.make_dict()
+        inserted = []
+        for j, row in enumerate(mesh_dict):
+            i_counter_bottom = 0
+            i_counter_top = 0
+            for face in row:
+                insert_ab=False
+                insert_dc=False
+
+                [a, b, c, d] = face["vertices"]
+                distances = [self.mesh.edge_length(a, b), self.mesh.edge_length(b, c), self.mesh.edge_length(c, d), self.mesh.edge_length(d, a)]
+
+                self.mesh.vertex_attribute(a, "i", value=self.mesh.vertex_attribute(b, "i")+i_counter_bottom)
+                if 2*resolution >= distances[0] > resolution and j==0:
+                    x, y, z = self.mesh.vertex_coordinates(a)
+                    nx, ny, nz = self.mesh.vertex_coordinates(b)
+                    scale = resolution/distances[0]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    self.mesh.vertex_attributes(b, ["x", "y", "z"], values=[self.mesh.vertex_attribute(a, "x") + delta[0], self.mesh.vertex_attribute(a, "y") + delta[1], self.mesh.vertex_attribute(a, "z") + delta[2]])
+                    
+                elif distances[0] > 2*resolution:
+                    insert_ab=True
+                    x, y, z = self.mesh.vertex_coordinates(a)
+                    nx, ny, nz = self.mesh.vertex_coordinates(b)
+                    scale = resolution/distances[0]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    e = self.mesh.add_vertex(x=self.mesh.vertex_attribute(a, "x") + delta[0], y=self.mesh.vertex_attribute(a, "y") + delta[1], z=self.mesh.vertex_attribute(a, "z") + delta[2], i=self.mesh.vertex_attribute(a, "i")+1, j=self.mesh.vertex_attribute(a, "j"), glob_id=self.mesh.vertex_attribute(a, "glob_id"), x_disp=0, z_disp=0)
+                    i_counter_bottom += 1
+                    self.mesh.vertex_attributes(b, ["x", "y", "z"], values=[self.mesh.vertex_attribute(a, "x") + 2*delta[0], self.mesh.vertex_attribute(a, "y") + 2*delta[1], self.mesh.vertex_attribute(a, "z") + 2*delta[2]])
+                self.mesh.vertex_attribute(b, "i", value=self.mesh.vertex_attribute(b, "i")+i_counter_bottom)
+            
+
+                self.mesh.vertex_attribute(d, "i", value=self.mesh.vertex_attribute(c, "i")+i_counter_top)
+                if distances[2] > resolution:
+                    factor = 1
+                    x, y, z = self.mesh.vertex_coordinates(d)
+                    nx, ny, nz = self.mesh.vertex_coordinates(c)
+                    if distances[2] > 2*resolution:
+                        factor = 2
+                        insert_dc = True
+                    scale = factor*resolution/distances[2]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    self.mesh.vertex_attributes(c, ["x", "y", "z"], values=[self.mesh.vertex_attribute(d, "x") + delta[0], self.mesh.vertex_attribute(d, "y") + delta[1], self.mesh.vertex_attribute(d, "z") + delta[2]])
+                    if distances[2] > 1.9*resolution:
+                        f = self.mesh.add_vertex(x=self.mesh.vertex_attribute(d, "x") + delta[0]/2, y=self.mesh.vertex_attribute(d, "y") + delta[1]/2, z=self.mesh.vertex_attribute(d, "z") + delta[2]/2, i=self.mesh.vertex_attribute(d, "i")+1, j=self.mesh.vertex_attribute(d, "j"), glob_id=self.mesh.vertex_attribute(d, "glob_id"), x_disp=0, z_disp=0)
+                        i_counter_top += 1
+                self.mesh.vertex_attribute(c, "i", value=self.mesh.vertex_attribute(c, "i")+i_counter_top)
+
+                if insert_ab and insert_dc:
+                    self.mesh.delete_face(face["face"])
+                    self.mesh.add_face([a, e, f, d])
+                    self.mesh.add_face([e, b, c, f])
+                    inserted.append(e)
+                    inserted.append(f)
+                    print("inserted" + str(face["face"]))
+        # print sum of distances 0 in dict for one row
+        print(self.x_size*resolution)
+        print([sum([face["distances"][0] for face in row]) for row in mesh_dict])
+        print([sum([face["distances"][2] for face in row]) for row in mesh_dict])
+        self.mesh.cull_vertices()
+
+        return self.mesh, inserted
+    
+
+    def shift_nodes_three(self, resolution=0.1, selected_nodes=[]):
+        mesh_dict = self.make_dict()
+        insert_grid = [[0 for _ in range(len(mesh_dict[0]))] for _ in range(len(mesh_dict))]
+
+        for j, row in enumerate(mesh_dict):
+            for i, face in enumerate(row):
+
+                [a, b, c, d] = face["vertices"]
+                distances = [self.mesh.edge_length(a, b), self.mesh.edge_length(b, c), self.mesh.edge_length(c, d), self.mesh.edge_length(d, a)]
+
+                if 2*resolution >= distances[0] > resolution and j==0:
+                    x, y, z = self.mesh.vertex_coordinates(a)
+                    nx, ny, nz = self.mesh.vertex_coordinates(b)
+                    scale = resolution/distances[0]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    self.mesh.vertex_attributes(b, ["x", "y", "z"], values=[self.mesh.vertex_attribute(a, "x") + delta[0], self.mesh.vertex_attribute(a, "y") + delta[1], self.mesh.vertex_attribute(a, "z") + delta[2]])
+                    
+                elif distances[0] > 2*resolution:
+                    # insert_ab=True
+                    x, y, z = self.mesh.vertex_coordinates(a)
+                    nx, ny, nz = self.mesh.vertex_coordinates(b)
+                    scale = resolution/distances[0]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    insert_grid[j][i] += 1
+                    self.mesh.vertex_attributes(b, ["x", "y", "z"], values=[self.mesh.vertex_attribute(a, "x") + 2*delta[0], self.mesh.vertex_attribute(a, "y") + 2*delta[1], self.mesh.vertex_attribute(a, "z") + 2*delta[2]])
+                
+                if distances[2] > resolution:
+                    factor = 1
+                    x, y, z = self.mesh.vertex_coordinates(d)
+                    nx, ny, nz = self.mesh.vertex_coordinates(c)
+                    if distances[2] > 2*resolution:
+                        factor = 2
+                        insert_grid[j][i] += 2
+                    scale = factor*resolution/distances[2]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    self.mesh.vertex_attributes(c, ["x", "y", "z"], values=[self.mesh.vertex_attribute(d, "x") + delta[0], self.mesh.vertex_attribute(d, "y") + delta[1], self.mesh.vertex_attribute(d, "z") + delta[2]])
+
+        # 0 means no insert, 1 means bottom insert, 2 means top insert, 3 means both
+        # print(insert_grid)
+        inserted = self.insert_nodes(mesh_dict, insert_grid, resolution)
+        # print sum of distances 0 in dict for one row
+        print(self.x_size*resolution)
+        print([sum([face["distances"][0] for face in row]) for row in mesh_dict])
+        print([sum([face["distances"][2] for face in row]) for row in mesh_dict])
+        #self.mesh.cull_vertices()
+
+        return self.mesh, inserted
+    
+
+    def insert_nodes(self, mesh_dict, insert_grid, resolution=0.1):
+        inserted_nodes = []
+        for j, row in enumerate(insert_grid):
+            stored_bottom = 0
+            stored_top = 0
+            i_counter = 0
+            for i, insert in enumerate(row):
+                # print(j, i, row, insert)
+                inserted = False
+                [a, b, c, d] = mesh_dict[j][i]["vertices"]
+                distances = [self.mesh.edge_length(a, b), self.mesh.edge_length(c, d)]
+                self.mesh.vertex_attribute(a, "i", value=self.mesh.vertex_attribute(a, "i")+i_counter)
+                self.mesh.vertex_attribute(d, "i", value=self.mesh.vertex_attribute(d, "i")+i_counter)
+                if insert == 3 or (insert == 1 and stored_top > 0) or (insert == 2 and stored_bottom > 0):
+                    i_counter += 1
+                    inserted = True
+                    x, y, z = self.mesh.vertex_coordinates(a)
+                    nx, ny, nz = self.mesh.vertex_coordinates(b)
+                    scale = resolution/distances[0]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    e = self.mesh.add_vertex(x=self.mesh.vertex_attribute(a, "x") + delta[0], y=self.mesh.vertex_attribute(a, "y") + delta[1], z=self.mesh.vertex_attribute(a, "z") + delta[2], i=self.mesh.vertex_attribute(a, "i")+1, j=self.mesh.vertex_attribute(a, "j"), glob_id=self.mesh.vertex_attribute(a, "glob_id"), x_disp=0, z_disp=0)
+                    
+                    x, y, z = self.mesh.vertex_coordinates(d)
+                    nx, ny, nz = self.mesh.vertex_coordinates(c)
+                    scale = resolution/distances[1]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    f = self.mesh.add_vertex(x=self.mesh.vertex_attribute(d, "x") + delta[0], y=self.mesh.vertex_attribute(d, "y") + delta[1], z=self.mesh.vertex_attribute(d, "z") + delta[2], i=self.mesh.vertex_attribute(d, "i")+1, j=self.mesh.vertex_attribute(d, "j"), glob_id=self.mesh.vertex_attribute(d, "glob_id"), x_disp=0, z_disp=0)
+
+                    self.mesh.delete_face(mesh_dict[j][i]["face"])
+                    self.mesh.add_face([a, e, f, d])
+                    self.mesh.add_face([e, b, c, f])
+                    inserted_nodes.append(e)
+                    inserted_nodes.append(f)
+                    print("inserted " + str(mesh_dict[j][i]["face"]))
+                    if insert == 1:
+                        stored_top -= 1
+                    elif insert == 2:
+                        stored_bottom -= 1
+                elif insert == 1:
+                    stored_bottom += 1
+                elif insert == 2:
+                    stored_top += 1
+
+                if inserted:
+                    print(stored_top)
+                    # shift vertix back by resolution x stored_top
+                    x, y, z = self.mesh.vertex_coordinates(d)
+                    nx, ny, nz = self.mesh.vertex_coordinates(c)
+                    scale = resolution/distances[1]
+                    delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
+                    self.mesh.vertex_attributes(c, ["x", "y", "z"], values=[self.mesh.vertex_attribute(d, "x") + delta[0], self.mesh.vertex_attribute(d, "y") + delta[1], self.mesh.vertex_attribute(d, "z") + delta[2]])
+                
+                
+                self.mesh.vertex_attribute(b, "i", value=self.mesh.vertex_attribute(b, "i")+i_counter)
+                self.mesh.vertex_attribute(c, "i", value=self.mesh.vertex_attribute(c, "i")+i_counter)
+        
+        return inserted_nodes
+        
+
+    def make_dict(self):
+        old_mesh = [[] for _ in range(self.z_size-1)]
+        # # find max i and j value
+        # max_i = max([self.mesh.face_attribute(face, "i") for face in self.mesh.faces()])
+        # max_j = max([self.mesh.face_attribute(face, "j") for face in self.mesh.faces()])
+        for j in range(self.z_size-1):
+            for i in range(self.x_size-1):
+                faces = list(self.mesh.faces_where({"i": i, "j": j}))
+                face = faces[0]
+                
+                face_center = self.mesh.face_center(face)
+                neighbors = self.mesh.face_neighbors(face)
+                vertices = self.mesh.face_vertices(face)
+                # starting bottom left corner anticlockwise
+                [a, b, c, d] = vertices
+                # relevant only index 0 and 2
+                distances = [self.mesh.edge_length(a, b), self.mesh.edge_length(b, c), self.mesh.edge_length(c, d), self.mesh.edge_length(d, a)]
+                face_dict = {
+                    "face": face,
+                    "vertices": vertices,
+                    "distances": distances,
+                    "neighbors": neighbors,
+                    "center": face_center,
+                    }
+                old_mesh[j].append(face_dict)
+        
+        vertices_dict = []
+        return old_mesh
 
 class NewWall(Wall):
     def __init__(self, width=2.0, height=2.0, elsize=0.025, rotation=0.0):
@@ -171,13 +373,50 @@ class NewWall(Wall):
         mesh = meshsrf.to_compas()
 
         return mesh
-    
+
+
 class NewMesher:
     def __init__(self, mesh, resolution=0.05):
         self.distances = {}
         self.mesh = mesh
         self.resolution = resolution
         self.mesh_list = [self.mesh.vertex_coordinates(v) for v in self.mesh.vertices()]
+            
+
+
+    def make_dict(self):
+        old_mesh = [[]]
+        k = 0
+        current_face = self.mesh.face_where({"i": 0, "j": 0})
+        for _ in self.mesh.faces():
+            face_center = self.mesh.face_center(current_face)
+            neighbors = self.mesh.face_neighbors(current_face)
+            
+            # starting bottom left corner anticlockwise
+            vertices = self.mesh.face_vertices(current_face)
+            [a, b, c, d] = vertices
+            # relevant only index 0 and 2
+            distances = [self.mesh.edge_length(a, b), self.mesh.edge_length(b, c), self.mesh.edge_length(c, d), self.mesh.edge_length(d, a)]
+            face_dict = {
+                "face": current_face,
+                "vertices": vertices,
+                "distances": distances,
+                "neighbors": neighbors,
+                "center": face_center,
+                }
+            old_mesh[k].append(face_dict)
+            # jump to neighbor thats closest on x axis and not already in old_mesh
+            x, y, z = face_center
+            neighbors = [n for n in neighbors if n not in old_mesh[k]]
+            dx_n = [abs(self.mesh.face_center(n)[0]-face_center[0]) for n in neighbors]
+            if min(dx_n) > 0.03:
+                k += 1
+                old_mesh.append([])
+                current_face = self.mesh.face_where({"i": k, "j": 0})
+            current_face = neighbors[dx_n.index(min(dx_n))]
+        # distance is always bigger than resolution, never smaller, therefore shift to left until no distance is bigger than resolution
+        return old_mesh
+
     
     def shift_nodes(self):
         for vertex in self.mesh.vertices():
