@@ -1,6 +1,8 @@
-from compas.geometry import Frame, Transformation
+from compas.geometry import Frame, Transformation, Rotation, Vector
 from compas_fab.robots import Configuration
 from ur_fabrication_control.kinematics.ur_kinematics import inverse_kinematics
+from compas_ghpython.utilities import draw_frame
+from math import pi
 
 ur_params = {
     "ur3": [0.1519, -0.24365, -0.21325, 0.11235, 0.08535, 0.0819],
@@ -21,13 +23,31 @@ class Simulation:
     def check_path(self):
         not_reachable = []
         configurations = []
+        rotated = []
+
         T = Transformation.from_change_of_basis(self.robot.BCF, Frame.worldXY())
         prev_config = self.start_config
+
         for plane in self.path:
             frame_WCS = Frame(plane.Origin, plane.XAxis, plane.YAxis)
             self.set_lift_height(plane.Origin[2])
             frame = frame_WCS.transformed(T)
             joint_configs = self.analytics_inverse(frame)
+            
+            # get rotation parameters
+            robot_normal = Vector.from_start_end(self.robot.RCF.point, frame.point)
+            axis = frame.normal.cross(robot_normal)
+            phi = frame.normal.angle(robot_normal)
+            counter = 0
+            if not joint_configs:
+                
+                rotated.append(draw_frame(frame))
+            while not joint_configs and counter <= 5:
+                counter += 1
+                frame.transform(Rotation.from_axis_and_angle(axis, phi*counter/5, frame.point))
+                joint_configs = self.analytics_inverse(frame)
+                rotated.append(draw_frame(frame))
+            
             if joint_configs:
                 # get sum of differences between configs and start config
                 delta_configs = [sum([abs(joint_config[i] - prev_config.joint_values[i]) for i in range(len(joint_config))]) for joint_config in joint_configs]
@@ -43,7 +63,8 @@ class Simulation:
             configurations.append(configuration)
             # print(configuration.joint_values)
             prev_config = configuration
-        return configurations, not_reachable
+        return configurations, not_reachable, rotated
+    
             
     def set_lift_height(self, height):
         if 1.049 < height < 1.049 + 0.72:

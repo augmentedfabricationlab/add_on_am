@@ -201,7 +201,7 @@ class Map2d_optimized(Map2d):
 
             if len(reachable_pos) == 0:
                 if not node in pos_list.keys():
-                    pos_list[node] = positions[0]
+                    pos_list[node] = [positions[0]]
                 # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
                 return positions[0], reachable_points, pos_list
             else:
