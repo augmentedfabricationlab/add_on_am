@@ -1,4 +1,4 @@
-from compas.datastructures import Mesh, Network
+from compas.datastructures import Network
 from compas.geometry import Point, KDTree, Plane, Frame, Vector, cross_vectors
 from collections import OrderedDict
 from operator import itemgetter
@@ -84,6 +84,7 @@ class Map2d:
     
 
     def divide(self, planner, envelope):
+        # divide segments according to closer position
         reach, others = self.pos_by_path(planner, envelope)
         positions = {}
         for pos in reach.keys():

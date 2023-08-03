@@ -2,7 +2,6 @@ from compas.geometry import Frame, Transformation, Rotation, Vector
 from compas_fab.robots import Configuration
 from ur_fabrication_control.kinematics.ur_kinematics import inverse_kinematics
 from compas_ghpython.utilities import draw_frame
-from math import pi
 
 ur_params = {
     "ur3": [0.1519, -0.24365, -0.21325, 0.11235, 0.08535, 0.0819],

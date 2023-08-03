@@ -13,11 +13,10 @@ class Wall(object):
     def __init__(self, width=2.0, height=2.0, elsize=0.025, x_disp=0.0, y_disp = 0.0, rotation=0.0):
         """create a regular quad mesh from height and width and edge length in the xz-plane
         """
-        
         self.mesh = Mesh()
         self.window_vertices = []
         
-        self.elsize = elsize
+        self.elsize = elsize # float
 
         self.x_size = int(width / elsize) + 1
         self.z_size = int(height / elsize) + 1

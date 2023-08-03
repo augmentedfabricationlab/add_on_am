@@ -453,3 +453,89 @@ class SurfacePathPlanner():
     
     def node_color(self, node, color_type='rgb'):
         return self.network.node_attribute(node, 'color').rgb255
+
+
+class SegmentPathPlanner(SurfacePathPlanner):
+
+    def set_network_nodes(self, total_network, nodes):        
+        for index in nodes:
+            self.add_node(index, nodes=nodes)       
+
+    def add_node(self, index, attr_dict={}, nodes=[], **kwattr):
+        point = self.mesh.face_center(index)
+        normal = self.mesh.face_normal(index)
+        neighbors = []
+        for neighbor in self.mesh.face_neighbors(index):
+            if neighbor in nodes:
+                neighbors.append(neighbor)
+        color = self.face_color(index)
+        attr_dict.update({
+            'x':point[0], 'y':point[1], 'z':point[2],
+            'vx':normal[0], 'vy':normal[1], 'vz':normal[2],
+            'r':color.rgb255[0], 'g':color.rgb255[1], 'b':color.rgb255[2],
+            'color': color,
+            'force': 0,
+            'skip' : False,
+            'neighbors':neighbors,
+            'number_of_neighbors':len(neighbors),
+            'sphere':None,
+            'frame':None,
+            'thickness':0.0,
+            'radius':0.0,
+            'area':0.0,
+            'velocity':0.0,
+            'nozzle_distance':0.0,
+            'tool_frame':None
+        })
+        attr_dict.update(**kwattr)
+        self.network.add_node(key=index, attr_dict=attr_dict)
+
+    def lowest_axis_path(self, orientation="z"):
+        """Creates a tool-path based on the given mesh topology.
+
+        Args:
+            mesh (compas mesh): Description of `mesh`
+            orientation (int): X-axis = 1, Y-axis = 2, Z-axis =3
+        """
+        if self.mesh == None:
+            raise ValueError
+        if self.network == None:
+            self.set_network_nodes()
+
+        n = 0 # Number of interruptions        
+        current = self.get_node(number_of_neighbors=2, orientation=orientation, func=2, idx=0)
+                    
+        # Getting the starting point
+        print("start: " + str(current))
+        # Path finding process
+        for index in self.mesh.faces():
+            # Look for the neighbor with the lowest x/y/z
+            self.network.path.append(current)
+            neighbornodes = {}
+            # print(self.network.node_attribute(key=current, name='neighbors'))
+            for i in self.network.node_attribute(key=current, name='neighbors'):
+                if len(self.network.connected_edges(key=i))==0:
+                    neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})
+            # If neighbors found then find the closest one based on orientation
+            if neighbornodes != {}:
+                if len(list(neighbornodes.keys()))>2:
+                    following = list(neighbornodes.keys())[list(neighbornodes.values()).index(sorted(list(neighbornodes.values()))[1])]
+                else:
+                    following = list(neighbornodes.keys())[list(neighbornodes.values()).index(min(list(neighbornodes.values())))]
+                # Draw a line between the current and following face centerpoints
+                self.add_edge(current, following)
+            # If the face doesn't have free neighbors
+            else:
+                # But has remaining unconnected nodes
+                if self.network.number_of_nodes()-1 != self.network.number_of_edges():
+                    # Move to the closest available face centerpoint
+                    following = self.move_to_closest(current)
+                    if following == current:
+                        return self.network, n
+                    # Draw a line between the current and the following face
+                    self.add_edge(current, following)
+                    n += 1
+            current = following
+            print(current)
+        return self.network, n
+    

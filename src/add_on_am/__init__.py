@@ -20,14 +20,14 @@ Describe typical classes found in project
 
 """
 
-from .wall import *
-from .reachability_map import *
-from .path_planner import *
-from .heat_planner import *
-from .path_sectioning import *
-from .segment_path_planner import *
-from .segmentation import *
+from .wall import * #
+from .reachability_map import * #
+from .path_planner import * #
+from .segmentation import * #
 from .simulation import *
+# from .heat_planner import *
+# from .path_sectioning import *
+# from .segment_path_planner import *
 
 """
 

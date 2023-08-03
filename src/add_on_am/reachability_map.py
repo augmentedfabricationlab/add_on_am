@@ -4,7 +4,6 @@ from compas.geometry import Point, Vector, Circle, Sphere, Cylinder, Plane, Fram
 from compas.datastructures import Mesh
 from compas.data import Data
 from statistics import mean
-import math
 
 class WsSphere(Data):
     def __init__(self, header=None, point=None, ri=None, poses=None):
@@ -276,14 +275,6 @@ class Envelope:
         (self.x, self.y) = max_in[0]
         return c, max_in
         
-    # def create_mesh(self):
-    #     reach = self.create_sphere_cylinder(self.r_out, self.h_out)
-    #     deadzone = self.create_sphere_cylinder(self.r_in, self.h_in)
-    #     deadzone.Translate(0, 0, self.z_offset)
-    #     e = rg.Mesh()
-    #     e.Append([reach, deadzone])
-    #     e.Translate(self.x, self.y, self.z)
-    #     return e
     
     def create_sphere_cylinder(self, r, h):
         pill = Mesh.from_shape(Sphere(Point(self.x, self.y, self.z), r))
