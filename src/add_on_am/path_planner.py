@@ -9,9 +9,9 @@ from compas.colors import Color, ColorMap
 class SurfacePathPlanner():
     def __init__(self):
         self.mesh = None
-        self.network = Network(name="network")
-        self.network.path = []
-        self.network.default_node_attributes = {
+        self.path_network = Network(name="network")
+        self.path_network.path = []
+        self.path_network.default_node_attributes = {
             'x':0, 'y':0, 'z':0,
             'vx':0, 'vy':0, 'vz':0,
             'r':0, 'g':0, 'b':0,
@@ -97,52 +97,52 @@ class SurfacePathPlanner():
             'tool_frame':None
         })
         attr_dict.update(**kwattr)
-        self.network.add_node(key=index, attr_dict=attr_dict)
+        self.path_network.add_node(key=index, attr_dict=attr_dict)
     
     def add_edge(self, start, end):
-        new_edge = self.network.add_edge(start, end)
-        # if self.network.node_attribute(key=start, name='frame') is None:
+        new_edge = self.path_network.add_edge(start, end)
+        # if self.path_network.node_attribute(key=start, name='frame') is None:
         #     self.set_node_frame_from_edge(start, new_edge)
         # self.set_node_frame_from_edge(end, new_edge)
-        # if self.network.node_attribute(key=start, name='frame') is None:
+        # if self.path_network.node_attribute(key=start, name='frame') is None:
         #     self.select_node_frame(start)
         # self.select_node_frame(end)
     
     def set_node_frame(self, node, flip):
-        norm = Vector.from_data(self.network.node_attributes(key=node, names=['vx','vy','vz']))
+        norm = Vector.from_data(self.path_network.node_attributes(key=node, names=['vx','vy','vz']))
         if flip:
             norm = norm.inverted()
         v1 = cross_vectors(norm, Vector.Zaxis()) # Zaxis
         v2 = cross_vectors(norm,v1)
-        frame = Frame(Point.from_data(self.network.node_coordinates(node)), v1, v2)
-        self.network.node_attribute(key=node, name='frame', value=frame)
+        frame = Frame(Point.from_data(self.path_network.node_coordinates(node)), v1, v2)
+        self.path_network.node_attribute(key=node, name='frame', value=frame)
         return frame
     
     def map_reachability(self, map3d, center):
         trans = Translation.from_vector(center)
         cloud = Point.transformed_collection(map3d.points, trans)
         kd = KDTree(cloud)
-        for node, point in enumerate(self.network.to_points()):
+        for node, point in enumerate(self.path_network.to_points()):
             p, k, dist = kd.nearest_neighbor(point)
             sp = map3d.spheres[k].copy()
             sp.point = point
-            self.network.node_attribute(key=node, name='sphere', value=sp)
+            self.path_network.node_attribute(key=node, name='sphere', value=sp)
     
     def select_node_frame(self, node):
-        normal = Vector.from_data(self.network.node_attributes(key=node, names=['vx','vy','vz']))
+        normal = Vector.from_data(self.path_network.node_attributes(key=node, names=['vx','vy','vz']))
         # if dot_vectors(normal, -Vector.Zaxis())<0:
         #     norm = normal.inverted()
         angles = []
-        for pose in self.network.node_attribute(key=node, name='sphere').poses:
+        for pose in self.path_network.node_attribute(key=node, name='sphere').poses:
             angles.append(angle_vectors(normal, pose.normal))
-        pose = self.network.node_attribute(key=node, name='sphere').poses[angles.index(min(angles))]
-        pose.point = Point.from_data(self.network.node_coordinates(node))
-        self.network.node_attribute(key=node, name='frame', value=pose)
+        pose = self.path_network.node_attribute(key=node, name='sphere').poses[angles.index(min(angles))]
+        pose.point = Point.from_data(self.path_network.node_coordinates(node))
+        self.path_network.node_attribute(key=node, name='frame', value=pose)
 
     def add_force(self, force):
         for i in self.mesh.faces():
             n = (force[0][i] + force[1][i]) /2
-            self.network.node_attribute(key=i, name='force', value=n)
+            self.path_network.node_attribute(key=i, name='force', value=n)
 
     def get_node(self, **kwargs):
         """
@@ -162,7 +162,7 @@ class SurfacePathPlanner():
         func_dict = {0:min,1:max,2:sorted}
         func = func_dict[attr_dict['func']]
         for key, value in kwargs.items():
-            if key in self.network.default_node_attributes.keys():
+            if key in self.path_network.default_node_attributes.keys():
                 conditions.update({key:value})
        #  print(conditions)
         # if 'orientation' not in locals():
@@ -170,10 +170,10 @@ class SurfacePathPlanner():
         # if 'index' not in locals():
         #     func = None
 
-        nodes = list(self.network.nodes_where(conditions))
+        nodes = list(self.path_network.nodes_where(conditions))
         print(len(nodes))
         if nodes != []:
-            vals = [self.network.node_attribute(key=k, name=attr_dict['orientation']) for k in nodes]
+            vals = [self.path_network.node_attribute(key=k, name=attr_dict['orientation']) for k in nodes]
             # print(vals)
             fval = func(vals)
             if isinstance(fval, list):
@@ -186,7 +186,7 @@ class SurfacePathPlanner():
     def vertical_lines(self, orientation):
         if self.mesh == None:
             raise ValueError
-        if self.network == None:
+        if self.path_network == None:
             self.set_network_nodes()
 
         n = 0 # Number of interruptions    
@@ -198,13 +198,13 @@ class SurfacePathPlanner():
         last = False
         for index in self.mesh.faces():
             # Look for the neighbor with the lowest x/y/z
-            self.network.path.append(current)
-            [x, y, z] = self.network.node_attributes(key=current, names=["x", "y", "z"])
+            self.path_network.path.append(current)
+            [x, y, z] = self.path_network.node_attributes(key=current, names=["x", "y", "z"])
             lines[n].append(Point(x, y, z))
             neighbornodes = {}
-            for i in self.network.node_attribute(key=current, name='neighbors'):
-                if len(self.network.connected_edges(key=i))==0:
-                    neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})
+            for i in self.path_network.node_attribute(key=current, name='neighbors'):
+                if len(self.path_network.connected_edges(key=i))==0:
+                    neighbornodes.update({i:self.path_network.node_attribute(key=i, name=orientation)})
             # If neighbors found then find the closest one based on orientation
             if neighbornodes != {}:
                 if len(neighbornodes.keys())>2:
@@ -214,10 +214,10 @@ class SurfacePathPlanner():
                 following = neighbornodes.keys()[k]
                 # Draw a line between the current and following face centerpoints
                 if len(neighbornodes.keys()) != 1:
-                    self.network.add_edge(current, following)
+                    self.path_network.add_edge(current, following)
                 elif 4.9749999 < neighbornodes.values()[0] < 4.975:
                     if last:
-                        self.network.add_edge(current, following)
+                        self.path_network.add_edge(current, following)
                     last = True
                 else:
                     lines.append([])
@@ -226,16 +226,16 @@ class SurfacePathPlanner():
             # If the face doesn't have free neighbors
             else:
                 # But has remaining unconnected nodes
-                if self.network.number_of_nodes()-1 != self.network.number_of_edges():
+                if self.path_network.number_of_nodes()-1 != self.path_network.number_of_edges():
                     # Move to the closest available face centerpoint
                     following = self.move_to_closest(current)
                     if following == current:
-                        return self.network, n, network_polylines(self.network)
+                        return self.path_network, n, network_polylines(self.path_network)
                     # Draw a line between the current and the following face
-                    self.network.add_edge(current, following)
+                    self.path_network.add_edge(current, following)
                     n += 1
             current = following
-        return self.network, n, network_polylines(self.network)
+        return self.path_network, n, network_polylines(self.path_network)
 
     def lowest_axis_path(self, orientation, alternate=False, inverse=False):
         """Creates a tool-path based on the given mesh topology.
@@ -246,21 +246,21 @@ class SurfacePathPlanner():
         """
         if self.mesh == None:
             raise ValueError
-        if self.network == None:
+        if self.path_network == None:
             self.set_network_nodes()
 
         n = 0 # Number of interruptions        
         current = self.get_node(number_of_neighbors=2, orientation=orientation, func=2, idx=0)
         if alternate and not inverse:
             opp_corner = self.get_node(number_of_neighbors=2, orientation=orientation, func=2, idx=3)
-            self.network.node_attribute(key=opp_corner, name='skip', value=True)
+            self.path_network.node_attribute(key=opp_corner, name='skip', value=True)
         if inverse:
             # skip other corner
             opp_corner = self.get_node(number_of_neighbors=2, orientation=orientation, func=2, idx=1)
-            self.network.node_attribute(key=opp_corner, name='skip', value=True)
+            self.path_network.node_attribute(key=opp_corner, name='skip', value=True)
             # skip other corner 2
             # opp_corner = self.get_node(number_of_neighbors=2, orientation=orientation, func=2, idx=3)
-            # self.network.node_attribute(key=opp_corner, name='skip', value=True)
+            # self.path_network.node_attribute(key=opp_corner, name='skip', value=True)
 
             inv_or = {
                 'x' : 'y',
@@ -268,32 +268,32 @@ class SurfacePathPlanner():
                 'z' : 'z'
             }
             neighbornodes = {}
-            for i in self.network.node_attribute(key=current, name='neighbors'):
-                if len(self.network.connected_edges(key=i))==0:
-                    if not self.network.node_attribute(key=i, name='skip') and alternate:
-                        neighbornodes.update({i:self.network.node_attribute(key=i, name=inv_or[orientation])})
+            for i in self.path_network.node_attribute(key=current, name='neighbors'):
+                if len(self.path_network.connected_edges(key=i))==0:
+                    if not self.path_network.node_attribute(key=i, name='skip') and alternate:
+                        neighbornodes.update({i:self.path_network.node_attribute(key=i, name=inv_or[orientation])})
                     elif not alternate:
-                        neighbornodes.update({i:self.network.node_attribute(key=i, name=inv_or[orientation])})
+                        neighbornodes.update({i:self.path_network.node_attribute(key=i, name=inv_or[orientation])})
             if neighbornodes != {}:
                 current = list(neighbornodes.keys())[list(neighbornodes.values()).index(min(list(neighbornodes.values())))]
                 if alternate:
                     for k in list(neighbornodes.keys()):
                         if k != current:
-                            self.network.node_attribute(key=k, name='skip', value=True)
+                            self.path_network.node_attribute(key=k, name='skip', value=True)
             
         # Getting the starting point
         print(current)
         # Path finding process
         for index in self.mesh.faces():
             # Look for the neighbor with the lowest x/y/z
-            self.network.path.append(current)
+            self.path_network.path.append(current)
             neighbornodes = {}
-            for i in self.network.node_attribute(key=current, name='neighbors'):
-                if len(self.network.connected_edges(key=i))==0:
-                    if self.network.node_attribute(key=i, name='skip')==False and alternate == True:
-                        neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})
+            for i in self.path_network.node_attribute(key=current, name='neighbors'):
+                if len(self.path_network.connected_edges(key=i))==0:
+                    if self.path_network.node_attribute(key=i, name='skip')==False and alternate == True:
+                        neighbornodes.update({i:self.path_network.node_attribute(key=i, name=orientation)})
                     elif alternate == False:
-                        neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})
+                        neighbornodes.update({i:self.path_network.node_attribute(key=i, name=orientation)})
             # If neighbors found then find the closest one based on orientation
             if neighbornodes != {}:
                 if len(list(neighbornodes.keys()))>2:
@@ -303,23 +303,23 @@ class SurfacePathPlanner():
                 if alternate == True:
                     for k in list(neighbornodes.keys()):
                         if k != following:
-                            self.network.node_attribute(key=k, name='skip', value=True)
+                            self.path_network.node_attribute(key=k, name='skip', value=True)
                 # Draw a line between the current and following face centerpoints
                 self.add_edge(current, following)
             # If the face doesn't have free neighbors
             else:
                 # But has remaining unconnected nodes
-                if self.network.number_of_nodes()-1 != self.network.number_of_edges():
+                if self.path_network.number_of_nodes()-1 != self.path_network.number_of_edges():
                     # Move to the closest available face centerpoint
                     following = self.move_to_closest(current)
                     if following == current:
-                        return self.network, n
+                        return self.path_network, n
                     # Draw a line between the current and the following face
                     self.add_edge(current, following)
                     n += 1
             current = following
             print(current)
-        return self.network, n
+        return self.path_network, n
     
 
     def from_heat_method(self, points):
@@ -343,23 +343,23 @@ class SurfacePathPlanner():
                 'nozzle_distance':0.0,
                 'tool_frame':None
             }
-            self.network.add_node(key=index, attr_dict=attr_dict)
-            self.network.path.append(index)
+            self.path_network.add_node(key=index, attr_dict=attr_dict)
+            self.path_network.path.append(index)
             if index != 0:
-                self.network.add_edge(index-1, index)
+                self.path_network.add_edge(index-1, index)
             print(index)
-        return self.network
+        return self.path_network
 
 
 
     def move_to_closest(self, current):
-        current_point = Point.from_data(self.network.node_coordinates(key=current))
+        current_point = Point.from_data(self.path_network.node_coordinates(key=current))
         distances = {}
-        nodes = [key for key in self.network.nodes() if len(self.network.connected_edges(key))==0]
+        nodes = [key for key in self.path_network.nodes() if len(self.path_network.connected_edges(key))==0]
         # print(nodes)
         for j in nodes:
-            if self.network.node_attribute(key=j, name='skip') == False:
-                d = distance_point_point(current_point, Point.from_data(self.network.node_coordinates(key=j)))
+            if self.path_network.node_attribute(key=j, name='skip') == False:
+                d = distance_point_point(current_point, Point.from_data(self.path_network.node_coordinates(key=j)))
                 distances.update({j:d})
         if len(list(distances.keys())) == 0:
             return current
@@ -406,7 +406,7 @@ class SurfacePathPlanner():
         self.thickness_map = thickness_map
 
     def calculate_fabrication_parameters(self, num_layers, n_layer, scale, measured=True):
-        nodes = [key for key in self.network.nodes() if len(self.network.connected_edges(key))!=0]
+        nodes = [key for key in self.path_network.nodes() if len(self.path_network.connected_edges(key))!=0]
         for node in nodes:
             self.set_node_area_radius(node, scale)
             self.set_node_thickness(node, num_layers)
@@ -415,11 +415,11 @@ class SurfacePathPlanner():
 
     def set_node_area_radius(self, node, scale):
         area = self.mesh.face_area(node)
-        self.network.node_attribute(key=node, name='area', value=(scale**2)*area)
-        self.network.node_attribute(key=node, name='radius', value=scale*math.sqrt(area/math.pi))
+        self.path_network.node_attribute(key=node, name='area', value=(scale**2)*area)
+        self.path_network.node_attribute(key=node, name='radius', value=scale*math.sqrt(area/math.pi))
 
     def set_node_distance(self, node, num_layers, n_layer, measured=True):
-        radius = self.network.node_attribute(key=node, name='radius')
+        radius = self.path_network.node_attribute(key=node, name='radius')
         if measured:
             drange = self.fabrication_parameters['measured_distances']
             rrange = self.fabrication_parameters['measured_radii']
@@ -428,31 +428,31 @@ class SurfacePathPlanner():
             rrange = self.fabrication_parameters['radius_range']
 
         distance = ((drange[1]-drange[0])/(rrange[1]-rrange[0]))*radius
-        distance_thickness = self.network.node_attribute(key=node, name='thickness')*(n_layer/num_layers)
-        self.network.node_attribute(key=node, name='distance', value=distance)
-        frame = self.network.node_attribute(node, 'frame')
+        distance_thickness = self.path_network.node_attribute(key=node, name='thickness')*(n_layer/num_layers)
+        self.path_network.node_attribute(key=node, name='distance', value=distance)
+        frame = self.path_network.node_attribute(node, 'frame')
         T = Translation.from_vector(frame.zaxis*-(distance+distance_thickness))
         tool_frame = frame.transformed(T)
-        self.network.node_attribute(key=node, name='tool_frame', value=tool_frame)
+        self.path_network.node_attribute(key=node, name='tool_frame', value=tool_frame)
 
     def set_node_thickness(self, node, num_layers):
-        node_color = self.network.node_attribute(node, 'color').rgb255
+        node_color = self.path_network.node_attribute(node, 'color').rgb255
         n=0
         while n < 255:
-            ncol = self.network.node_attribute(n, 'color').rgb255
+            ncol = self.path_network.node_attribute(n, 'color').rgb255
             if ncol == node_color:
                 break
             n+=1
         t = self.thickness_map[n]
-        self.network.node_attribute(key=node, name='thickness', value=t/num_layers)
+        self.path_network.node_attribute(key=node, name='thickness', value=t/num_layers)
 
     def set_node_velocity(self, node):
-        volume = self.network.node_attribute(key=node, name='area')*self.network.node_attribute(key=node, name='thickness')
-        velocity = self.network.node_attribute(key=node, name='radius')/(volume/(self.fabrication_parameters['material_flowrate']/60))
-        self.network.node_attribute(key=node, name='velocity', value=velocity)
+        volume = self.path_network.node_attribute(key=node, name='area')*self.path_network.node_attribute(key=node, name='thickness')
+        velocity = self.path_network.node_attribute(key=node, name='radius')/(volume/(self.fabrication_parameters['material_flowrate']/60))
+        self.path_network.node_attribute(key=node, name='velocity', value=velocity)
     
     def node_color(self, node, color_type='rgb'):
-        return self.network.node_attribute(node, 'color').rgb255
+        return self.path_network.node_attribute(node, 'color').rgb255
 
 
 class SegmentPathPlanner(SurfacePathPlanner):
@@ -488,7 +488,7 @@ class SegmentPathPlanner(SurfacePathPlanner):
             'tool_frame':None
         })
         attr_dict.update(**kwattr)
-        self.network.add_node(key=index, attr_dict=attr_dict)
+        self.path_network.add_node(key=index, attr_dict=attr_dict)
 
     def lowest_axis_path(self, orientation="z"):
         """Creates a tool-path based on the given mesh topology.
@@ -499,7 +499,7 @@ class SegmentPathPlanner(SurfacePathPlanner):
         """
         if self.mesh == None:
             raise ValueError
-        if self.network == None:
+        if self.path_network == None:
             self.set_network_nodes()
 
         n = 0 # Number of interruptions        
@@ -510,12 +510,12 @@ class SegmentPathPlanner(SurfacePathPlanner):
         # Path finding process
         for index in self.mesh.faces():
             # Look for the neighbor with the lowest x/y/z
-            self.network.path.append(current)
+            self.path_network.path.append(current)
             neighbornodes = {}
-            # print(self.network.node_attribute(key=current, name='neighbors'))
-            for i in self.network.node_attribute(key=current, name='neighbors'):
-                if len(self.network.connected_edges(key=i))==0:
-                    neighbornodes.update({i:self.network.node_attribute(key=i, name=orientation)})
+            # print(self.path_network.node_attribute(key=current, name='neighbors'))
+            for i in self.path_network.node_attribute(key=current, name='neighbors'):
+                if len(self.path_network.connected_edges(key=i))==0:
+                    neighbornodes.update({i:self.path_network.node_attribute(key=i, name=orientation)})
             # If neighbors found then find the closest one based on orientation
             if neighbornodes != {}:
                 if len(list(neighbornodes.keys()))>2:
@@ -527,15 +527,291 @@ class SegmentPathPlanner(SurfacePathPlanner):
             # If the face doesn't have free neighbors
             else:
                 # But has remaining unconnected nodes
-                if self.network.number_of_nodes()-1 != self.network.number_of_edges():
+                if self.path_network.number_of_nodes()-1 != self.path_network.number_of_edges():
                     # Move to the closest available face centerpoint
                     following = self.move_to_closest(current)
                     if following == current:
-                        return self.network, n
+                        return self.path_network, n
                     # Draw a line between the current and the following face
                     self.add_edge(current, following)
                     n += 1
             current = following
             print(current)
-        return self.network, n
+        return self.path_network, n
     
+
+class PathPosPlanner(SurfacePathPlanner):
+    def __init__(self, wall, resolution, envelope):
+        self.mesh = None
+        self.envelope = envelope
+        self.path_network = Network(name="path_network")
+        self.path_network.path = []
+        self.path_network.default_node_attributes = {
+            'x':0, 'y':0, 'z':0,
+            'vx':0, 'vy':0, 'vz':0,
+            'r':0, 'g':0, 'b':0,
+            'color': None,
+            'force': 0,
+            'skip' : False,
+            'neighbors':0,
+            'number_of_neighbors':0,
+            'sphere':None,
+            'frame':None,
+            'thickness':0.0,
+            'radius':0.0,
+            'area':0.0,
+            'velocity':0.0,
+            'nozzle_distance':0.0,
+            'tool_frame':None
+        }
+
+        self.pos_network = Network(name="pos_network")
+        self.pos_network.path = []
+        self.pos_network.default_node_attributes = {
+            'x':0, 'y':0, 'z':0,
+            "ri": 0,
+            "vertices": [],
+        }
+
+        self.fabrication_parameters = {
+            'material_flowrate':500.0,          # l/hr
+            'thickness_range':[0.008, 0.022],     # m
+            'radius_range':[0.040, 0.075],        # m
+            'distance_range':[0.100, 0.300],      # m
+            'measured_radii':[0.0625, 0.075],        # [m]
+            'measured_distances':[0.150, 0.300],  # [m]
+            'measured_thicknesses':[0.012, 0.009], # [m]
+        }
+        self.color_map=None
+        self.thickness_map=None
+        
+        self.resolution = resolution
+        self.x_size = int(wall.width / resolution) + 1
+        self.wall = wall
+        self.set_quad_mesh(wall.mesh)
+
+    def create_pos_network(self):
+        index = 0
+        for i in range(self.x_size):
+            x = i*self.resolution
+            y_down = -self.wall.sin_wave(self.wall.down_amp, self.wall.down_freq, self.wall.down_phase, x)
+            y_up = -self.wall.sin_wave(self.wall.up_amp, self.wall.up_freq, self.wall.up_phase, x)
+            dynamic_reach = int((self.envelope.r_out - self.envelope.r_in + abs(y_down-y_up)) / self.resolution) + 1
+            for j in range(dynamic_reach):
+                y_l = y_down + self.envelope.r_in + j*self.resolution
+                y_r = y_down - self.envelope.r_in - j*self.resolution
+                attr_dict = {
+                    'x':x, 'y':y_l, 'z':0,
+                    "ri": 0,
+                    "vertices": [],
+                    }
+                self.pos_network.add_node(key=index, attr_dict=attr_dict)
+                index += 1
+                attr_dict = {
+                    'x':x, 'y':y_r, 'z':0,
+                    "ri": 0,
+                    "vertices": [],
+                    }
+                self.pos_network.add_node(key=index, attr_dict=attr_dict)
+                index += 1
+        return self.pos_network
+
+    
+    def reachability(self, reachability_map, kd, pos_x, pos_y, node_x, node_y, node_z):
+        # trans = Translation.from_vector(Vector(pos_x, pos_y, 0))
+        # cloud = Point.transformed_collection(reachability_map.points, trans)
+        # kd = KDTree(reachability_map.points)
+        if reachability_map:
+            p, k, dist = kd.nearest_neighbor(Point(node_x-pos_x, node_y-pos_y, node_z))
+            return reachability_map.spheres[k].ri
+        else:
+            return 100
+        
+
+    def linear_reach(self, node_x, node_y, node_z):
+        if node_z > self.envelope.h_out+self.envelope.z:
+            d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2 + (node_z-self.envelope.h_out-self.envelope.z)**2)
+        elif node_z < self.envelope.z:
+            d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2 + (node_z-self.envelope.z)**2)
+        else:
+            d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2)
+
+        t = 0
+        if self.envelope.r_in < d < self.envelope.r_out:
+            s_max = self.envelope.r_out - self.envelope.r_in
+            s = 2*abs(d - self.envelope.r_in - s_max/2)/s_max
+            t = 1 - s
+            
+        return 100*t
+    
+
+    def check_pose(self, node, reachability_map, kd, envelope):
+        normal = self.wall.mesh.vertex_normal(node)
+        node_x, node_y, node_z = self.wall.mesh.vertex_coordinates(node)
+        p, k, dist = kd.nearest_neighbor(Point(node_x-envelope.x, node_y-envelope.y, node_z))
+        poses = reachability_map.spheres[k].poses
+        for pose in poses:
+            # check if angle between normals is less than 20 degree
+            angle = pose.normal.angle(normal)*180/math.pi
+            if angle < 45:
+                return True
+        return False
+    
+        # returns poses of all nodes that are poses ordered along the path
+    def poses(self, nodes, pos):
+        # if pos is on other side flip normals
+        flip = False
+        if pos.Y < self.path_network.node_attribute(nodes[0], "y"):
+            flip = True
+
+        frames = []
+        for node in nodes:
+            frames.append(self.set_node_frame(node, flip))        
+        return frames
+
+    def positions_in_reach(self, node, previous_pos):
+            reachable_pos = []
+            # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
+            for pos in previous_pos:
+                [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(pos, ["x", "y"])
+                [x, y, z] = self.path_network.node_attributes(node, ["x", "y", "z"])
+                
+                inside = self.envelope.point_inside(x, y, z)
+                if inside:
+                    reachable_pos.append(pos)
+
+
+            if len(reachable_pos) == 1:
+                # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
+                
+                # check if final node is reached
+                if node == list(self.mesh.faces())[-1]:
+                    print("last node: ", node, previous_pos)
+                    return previous_pos, True
+                print(previous_pos)
+                return reachable_pos[0], True
+            else:
+                return reachable_pos, False
+
+    def section_path(self, pos=None, min_ri=0):
+        """Creates a tool-path based on the given mesh topology.
+
+        Args:
+            mesh (compas mesh): Description of `mesh`
+            orientation (int): X-axis = 1, Y-axis = 2, Z-axis =3
+        """
+        if self.mesh == None:
+            raise ValueError
+        if self.path_network == None:
+            self.set_network_nodes()
+        if self.pos_network == None:
+            raise ValueError
+
+        n = 0 # Number of interruptions        
+        current = self.get_node(number_of_neighbors=2, orientation="z", func=2, idx=1)
+        if pos == None:
+            pos_set = False
+            positions, segment = self.positions_in_reach(current, list(self.pos_network.nodes()))
+        else:
+            self.envelope.x = pos.X
+            self.envelope.y = pos.Y
+            pos_set = True
+            segment = False
+        direction = "x"
+        reverse = False
+                    
+        # Getting the starting point
+        print(current)
+        # Path finding process
+        for face in self.mesh.faces():
+            # Look for the neighbor with the lowest x/y/z
+            self.path_network.path.append(current)
+            neighbornodes = {}
+            neighbornodes_z = {}
+            for i in self.path_network.node_attribute(key=current, name='neighbors'):
+                if len(self.path_network.connected_edges(key=i))!=0:
+                    continue
+                [x, y, z] = self.path_network.node_attributes(i, ["x", "y", "z"])
+                if pos_set:
+                    inside = self.envelope.point_inside(x, y, z)
+                else:
+                    inside = True
+                
+
+                if inside:
+                    neighbornodes[i] = self.path_network.node_attribute(key=i, name=direction) - self.path_network.node_attribute(key=current, name=direction)
+                    neighbornodes_z[i] = self.path_network.node_attribute(key=i, name="z")
+                else:
+                    print("not inside envelope: " + str(i))
+                
+            # If neighbors found then find the closest one based on orientation
+            if neighbornodes != {}:
+                while len(neighbornodes.keys())>2:
+                    del neighbornodes[max(neighbornodes_z, key=neighbornodes_z.get)]
+                
+                # if only neighbor above and below are reachable, delete the one below, so it is clear that the path is going up
+                if len(neighbornodes.keys()) == 2:
+                    if abs(neighbornodes.values()[0] - neighbornodes.values()[1]) < 0.01:
+                        del neighbornodes[min(neighbornodes_z, key=neighbornodes_z.get)]
+
+                if reverse:
+                    following = min(neighbornodes, key=neighbornodes.get)
+                elif not reverse:
+                    following = max(neighbornodes, key=neighbornodes.get)
+                # if position is not yet final use threshold to move upwards if to low
+                if not pos_set and len(positions) < len(list(self.pos_network.nodes())):
+                    ri_temp = []
+                    for position in positions:
+                        [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(position, ["x", "y"])
+                        ri_temp.append(self.linear_reach(x, y, z))
+                    print("average_ri: " + str(sum(ri_temp)/len(ri_temp)), "min_ri: " + str(min(ri_temp)), "max_ri: " + str(max(ri_temp)))
+                    if min(ri_temp) < min_ri:
+                        following = max(neighbornodes_z, key=neighbornodes_z.get)
+                    
+
+                # ({1205: 5.2692638519147295e-07, 1203: -5.1641029763516144e-07}, {1205: 0.27494289168354835, 1203: 0.17494203073187164})
+                # this is not reliable and has to be changed
+                # if neighbornodes_z[following] - self.path_network.node_attribute(key=current, name="z") < -0.02:
+                #     del neighbornodes[following]
+                #     following = neighbornodes.keys()[0]
+                
+                # if path is going up reverse direction
+                x_cond = abs(self.path_network.node_attribute(key=current, name="x")-self.path_network.node_attribute(key=following, name="x")) < 0.01
+                z_cond = self.path_network.node_attribute(key=following, name="z") - self.path_network.node_attribute(key=current, name="z") > 0.03
+                if x_cond and z_cond:
+                    reverse = not reverse
+                    print("reverse: " + str(reverse) + "  " + str(current))
+                
+                if not pos_set:
+                    positions, segment = self.positions_in_reach(following, positions)
+
+                # Draw a line between the current and following face centerpoints
+                self.add_edge(current, following)
+
+                if segment:
+                    print("position: " + str(positions))
+                    print(neighbornodes)
+                    pos_set = True
+                    [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(positions, ["x", "y"])
+                    segment = False
+
+                    # positions, segment = self.positions_in_reach(following, list(self.pos_network.nodes()))
+
+            # If the face doesn't have free neighbors
+            else:
+                # start new and find another position
+                print("no neighbors")
+                return self.path_network, positions
+                # But has remaining unconnected nodes
+                if self.path_network.number_of_nodes()-1 != self.path_network.number_of_edges():
+                    # Move to the closest available face centerpoint
+                    following = self.move_to_closest(current)
+                    if following == current:
+                        return self.path_network, n
+                    # Draw a line between the current and the following face
+                    self.add_edge(current, following)
+                    n += 1
+            current = following
+            #print(current)
+        return self.path_network, positions
+
