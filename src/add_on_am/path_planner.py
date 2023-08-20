@@ -7,6 +7,7 @@ from compas.geometry import Frame, Vector, Point, Translation, KDTree, angle_vec
 from compas.colors import Color, ColorMap
 
 class SurfacePathPlanner():
+    """Class for generating a path network from a surface mesh."""
     def __init__(self):
         self.mesh = None
         self.path_network = Network(name="network")
@@ -42,10 +43,12 @@ class SurfacePathPlanner():
         self.thickness_map=None
 
     def set_quad_mesh(self, mesh):
+        """Set the quad mesh to be used for path planning."""
         self.mesh = mesh
         return self.mesh
 
     def set_quad_mesh_from_rhinomesh(self, rhinomesh):
+        """Set the quad mesh to be used for path planning."""
         self.mesh = rhinomesh.to_compas()
         self.mesh.update_default_vertex_attributes(attr_dict={'c':Color(1,1,1)})
         vertexcolors = rhinomesh.geometry.VertexColors
@@ -58,6 +61,10 @@ class SurfacePathPlanner():
         vertices = self.mesh.face_vertices(key)
         # center = self.face_center(key)
         vtx_colors = [self.mesh.vertex_attributes(vertex, ["c"])[0] for vertex in vertices]
+        print(vtx_colors)
+        return Color(1,1,1)
+        if None in vtx_colors:
+            return Color(1,1,1)
         r = (vtx_colors[0].r + vtx_colors[1].r + vtx_colors[2].r + vtx_colors[3].r)/4
         g = (vtx_colors[0].g + vtx_colors[1].g + vtx_colors[2].g + vtx_colors[3].g)/4
         b = (vtx_colors[0].b + vtx_colors[1].b + vtx_colors[2].b + vtx_colors[3].b)/4
@@ -65,15 +72,18 @@ class SurfacePathPlanner():
         return face_color
 
     def create_quad_mesh_from_surface(self, surface, nu, nv):
+        """Create a quad mesh from a surface mesh."""
         self.mesh = surface.to_compas_mesh()
         return self.mesh
 
     def set_network_nodes(self):
+        """Set the network nodes from the quad mesh."""
         for index in self.mesh.faces():
             self.add_node(index)
 
 
     def add_node(self, index, attr_dict={}, **kwattr):
+        """Add a node to the network."""
         point = self.mesh.face_center(index)
         normal = self.mesh.face_normal(index)
         neighbors = self.mesh.face_neighbors(index)
@@ -100,6 +110,7 @@ class SurfacePathPlanner():
         self.path_network.add_node(key=index, attr_dict=attr_dict)
     
     def add_edge(self, start, end):
+        """Add an edge to the network."""
         new_edge = self.path_network.add_edge(start, end)
         # if self.path_network.node_attribute(key=start, name='frame') is None:
         #     self.set_node_frame_from_edge(start, new_edge)
@@ -109,6 +120,7 @@ class SurfacePathPlanner():
         # self.select_node_frame(end)
     
     def set_node_frame(self, node, flip):
+        """Set the frame of a node."""
         norm = Vector.from_data(self.path_network.node_attributes(key=node, names=['vx','vy','vz']))
         if flip:
             norm = norm.inverted()
@@ -119,6 +131,7 @@ class SurfacePathPlanner():
         return frame
     
     def map_reachability(self, map3d, center):
+        """Map the reachability to the path."""
         trans = Translation.from_vector(center)
         cloud = Point.transformed_collection(map3d.points, trans)
         kd = KDTree(cloud)
@@ -129,6 +142,7 @@ class SurfacePathPlanner():
             self.path_network.node_attribute(key=node, name='sphere', value=sp)
     
     def select_node_frame(self, node):
+        """Select the best frame for a node."""
         normal = Vector.from_data(self.path_network.node_attributes(key=node, names=['vx','vy','vz']))
         # if dot_vectors(normal, -Vector.Zaxis())<0:
         #     norm = normal.inverted()
@@ -140,6 +154,7 @@ class SurfacePathPlanner():
         self.path_network.node_attribute(key=node, name='frame', value=pose)
 
     def add_force(self, force):
+        """Add a force to the network."""
         for i in self.mesh.faces():
             n = (force[0][i] + force[1][i]) /2
             self.path_network.node_attribute(key=i, name='force', value=n)
@@ -184,6 +199,7 @@ class SurfacePathPlanner():
             return None
     
     def vertical_lines(self, orientation):
+        """Generate a vertical lines path."""
         if self.mesh == None:
             raise ValueError
         if self.path_network == None:
@@ -323,6 +339,7 @@ class SurfacePathPlanner():
     
 
     def from_heat_method(self, points):
+        """Create a tool-path based on the heat method."""
         if self.mesh == None:
             raise ValueError
         mesh_face_centers = [self.mesh.face_center(index) for index in self.mesh.faces()]
@@ -353,6 +370,7 @@ class SurfacePathPlanner():
 
 
     def move_to_closest(self, current):
+        """Move to the closest available face centerpoint."""
         current_point = Point.from_data(self.path_network.node_coordinates(key=current))
         distances = {}
         nodes = [key for key in self.path_network.nodes() if len(self.path_network.connected_edges(key))==0]
@@ -456,7 +474,7 @@ class SurfacePathPlanner():
 
 
 class SegmentPathPlanner(SurfacePathPlanner):
-
+    """Path inside segments"""
     def set_network_nodes(self, total_network, nodes):        
         for index in nodes:
             self.add_node(index, nodes=nodes)       
@@ -541,6 +559,7 @@ class SegmentPathPlanner(SurfacePathPlanner):
     
 
 class PathPosPlanner(SurfacePathPlanner):
+    """Combination of position and path planning"""
     def __init__(self, wall, resolution, envelope):
         self.mesh = None
         self.envelope = envelope
@@ -591,12 +610,17 @@ class PathPosPlanner(SurfacePathPlanner):
         self.set_quad_mesh(wall.mesh)
 
     def create_pos_network(self):
+        """Create the position network around wall"""
         index = 0
+        # loop through the x axis
         for i in range(self.x_size):
             x = i*self.resolution
+            # y value of the top and bottom edge of the wall
             y_down = -self.wall.sin_wave(self.wall.down_amp, self.wall.down_freq, self.wall.down_phase, x)
             y_up = -self.wall.sin_wave(self.wall.up_amp, self.wall.up_freq, self.wall.up_phase, x)
+            # number of positions in y direction
             dynamic_reach = int((self.envelope.r_out - self.envelope.r_in + abs(y_down-y_up)) / self.resolution) + 1
+            # add the nodes to the network
             for j in range(dynamic_reach):
                 y_l = y_down + self.envelope.r_in + j*self.resolution
                 y_r = y_down - self.envelope.r_in - j*self.resolution
@@ -618,6 +642,7 @@ class PathPosPlanner(SurfacePathPlanner):
 
     
     def reachability(self, reachability_map, kd, pos_x, pos_y, node_x, node_y, node_z):
+        """Check the reachability of a node from ROS reachability map"""
         # trans = Translation.from_vector(Vector(pos_x, pos_y, 0))
         # cloud = Point.transformed_collection(reachability_map.points, trans)
         # kd = KDTree(reachability_map.points)
@@ -629,6 +654,7 @@ class PathPosPlanner(SurfacePathPlanner):
         
 
     def linear_reach(self, node_x, node_y, node_z):
+        """Calculate the linear reach of a node"""
         if node_z > self.envelope.h_out+self.envelope.z:
             d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2 + (node_z-self.envelope.h_out-self.envelope.z)**2)
         elif node_z < self.envelope.z:
@@ -646,19 +672,21 @@ class PathPosPlanner(SurfacePathPlanner):
     
 
     def check_pose(self, node, reachability_map, kd, envelope):
+        """Check if a node is reachable from the reachability map"""
         normal = self.wall.mesh.vertex_normal(node)
         node_x, node_y, node_z = self.wall.mesh.vertex_coordinates(node)
         p, k, dist = kd.nearest_neighbor(Point(node_x-envelope.x, node_y-envelope.y, node_z))
         poses = reachability_map.spheres[k].poses
         for pose in poses:
-            # check if angle between normals is less than 20 degree
+            # check if angle between normals is less than 45 degree
             angle = pose.normal.angle(normal)*180/math.pi
             if angle < 45:
                 return True
         return False
     
-        # returns poses of all nodes that are poses ordered along the path
+    
     def poses(self, nodes, pos):
+        """Calculate the poses of all nodes that are poses ordered along the path"""
         # if pos is on other side flip normals
         flip = False
         if pos.Y < self.path_network.node_attribute(nodes[0], "y"):
@@ -670,36 +698,32 @@ class PathPosPlanner(SurfacePathPlanner):
         return frames
 
     def positions_in_reach(self, node, previous_pos):
-            reachable_pos = []
-            # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
-            for pos in previous_pos:
-                [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(pos, ["x", "y"])
-                [x, y, z] = self.path_network.node_attributes(node, ["x", "y", "z"])
-                
-                inside = self.envelope.point_inside(x, y, z)
-                if inside:
-                    reachable_pos.append(pos)
+        """Calculate the positions from which a node is reachable"""
+        reachable_pos = []
+        # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
+        for pos in previous_pos:
+            [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(pos, ["x", "y"])
+            [x, y, z] = self.path_network.node_attributes(node, ["x", "y", "z"])
+            
+            inside = self.envelope.point_inside(x, y, z)
+            if inside:
+                reachable_pos.append(pos)
 
 
-            if len(reachable_pos) == 1:
-                # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
-                
-                # check if final node is reached
-                if node == list(self.mesh.faces())[-1]:
-                    print("last node: ", node, previous_pos)
-                    return previous_pos, True
-                print(previous_pos)
-                return reachable_pos[0], True
-            else:
-                return reachable_pos, False
+        if len(reachable_pos) == 1:
+            # if there is no more position from which the current node can be reached, add the previous position to the dict and start new with current node
+            
+            # check if final node is reached
+            if node == list(self.mesh.faces())[-1]:
+                print("last node: ", node, previous_pos)
+                return previous_pos, True
+            print(previous_pos)
+            return reachable_pos[0], True
+        else:
+            return reachable_pos, False
 
     def section_path(self, pos=None, min_ri=0):
-        """Creates a tool-path based on the given mesh topology.
-
-        Args:
-            mesh (compas mesh): Description of `mesh`
-            orientation (int): X-axis = 1, Y-axis = 2, Z-axis =3
-        """
+        """Find positions and generate path for a section of the wall"""
         if self.mesh == None:
             raise ValueError
         if self.path_network == None:
@@ -725,25 +749,32 @@ class PathPosPlanner(SurfacePathPlanner):
         # Path finding process
         for face in self.mesh.faces():
             # Look for the neighbor with the lowest x/y/z
+            if type(positions) == list:
+                print("number: " + str(len(positions)))
+            else:
+                print("number: " + str(positions))
             self.path_network.path.append(current)
             neighbornodes = {}
             neighbornodes_z = {}
+            # Find all neighbors of the current node
             for i in self.path_network.node_attribute(key=current, name='neighbors'):
+                # Check if the neighbor is already in the path
                 if len(self.path_network.connected_edges(key=i))!=0:
                     continue
                 [x, y, z] = self.path_network.node_attributes(i, ["x", "y", "z"])
+                # if pos is set, check if the node is inside the envelope
                 if pos_set:
                     inside = self.envelope.point_inside(x, y, z)
                 else:
                     inside = True
                 
-
+                # if node is inside the envelope, add it to the list of neighbors
                 if inside:
                     neighbornodes[i] = self.path_network.node_attribute(key=i, name=direction) - self.path_network.node_attribute(key=current, name=direction)
                     neighbornodes_z[i] = self.path_network.node_attribute(key=i, name="z")
                 else:
                     print("not inside envelope: " + str(i))
-                
+            
             # If neighbors found then find the closest one based on orientation
             if neighbornodes != {}:
                 while len(neighbornodes.keys())>2:
@@ -754,6 +785,8 @@ class PathPosPlanner(SurfacePathPlanner):
                     if abs(neighbornodes.values()[0] - neighbornodes.values()[1]) < 0.01:
                         del neighbornodes[min(neighbornodes_z, key=neighbornodes_z.get)]
 
+                print("neighbornodes: " + str(neighbornodes))
+                print(reverse)
                 if reverse:
                     following = min(neighbornodes, key=neighbornodes.get)
                 elif not reverse:
@@ -761,12 +794,14 @@ class PathPosPlanner(SurfacePathPlanner):
                 # if position is not yet final use threshold to move upwards if to low
                 if not pos_set and len(positions) < len(list(self.pos_network.nodes())):
                     ri_temp = []
+                    x, y, z = self.path_network.node_attributes(following, ["x", "y", "z"])
                     for position in positions:
                         [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(position, ["x", "y"])
                         ri_temp.append(self.linear_reach(x, y, z))
-                    print("average_ri: " + str(sum(ri_temp)/len(ri_temp)), "min_ri: " + str(min(ri_temp)), "max_ri: " + str(max(ri_temp)))
+                    # print("average_ri: " + str(sum(ri_temp)/len(ri_temp)), "min_ri: " + str(min(ri_temp)), "max_ri: " + str(max(ri_temp)))
                     if min(ri_temp) < min_ri:
                         following = max(neighbornodes_z, key=neighbornodes_z.get)
+                        print("upwards")
                     
 
                 # ({1205: 5.2692638519147295e-07, 1203: -5.1641029763516144e-07}, {1205: 0.27494289168354835, 1203: 0.17494203073187164})

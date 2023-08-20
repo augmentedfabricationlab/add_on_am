@@ -6,6 +6,7 @@ import math
 
 
 class Map2d:
+    """class for 2d map on floor"""
     def __init__(self, wall, resolution=0.05):
         self.network = Network(name="network")
         self.network.path = []
@@ -19,13 +20,18 @@ class Map2d:
         self.wall = wall
 
     def create_network(self, envelope):
+        """create network of nodes on floor"""
         index = 0
+        # iterate over x axis
         for i in range(self.x_size):
             x = i*self.resolution
+            # compute y values for top and bottom edge of wall
             y_down = -self.wall.sin_wave(self.wall.down_amp, self.wall.down_freq, self.wall.down_phase, x)
             y_up = -self.wall.sin_wave(self.wall.up_amp, self.wall.up_freq, self.wall.up_phase, x)
+            # compute number of nodes in reach of current x value
             dynamic_reach = int((envelope.r_out - envelope.r_in + abs(y_down-y_up)) / self.resolution) + 1
             for j in range(dynamic_reach):
+                # compute y values for left and right edge of wall and add nodes to network
                 y_l = y_down + envelope.r_in + j*self.resolution
                 y_r = y_down - envelope.r_in - j*self.resolution
                 attr_dict = {
@@ -45,10 +51,13 @@ class Map2d:
         return self.network
     
     def assign_reach(self, envelope):
+        """assign ri to floor nodes for sum of reachable vertices"""
+        # iterate over nodes and vertices
         for node in self.network.nodes():
             for vertex in self.wall.mesh.vertices():
                 [envelope.x, envelope.y, ri, vertices] = self.network.node_attributes(node, ["x", "y", "ri", "vertices"])
                 [x, y, z] = self.wall.mesh.vertex_coordinates(vertex)
+                # check if vertex is inside reach of node and if so increase ri by one
                 if envelope.point_inside(x, y, z):
                     ri += 1
                     vertices.append(vertex)
@@ -56,15 +65,16 @@ class Map2d:
 
 
     def pos_by_path(self, planner, envelope):
+        """segment the path and find positions from which the segments are reachable"""
         reach = {}
         positions = self.network.nodes()
         reachable_points = []
-        for node in planner.network.path:
+        for node in planner.path_network.path:
             reachable_pos = []
             # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
             for pos in positions:
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
-                [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
+                [x, y, z] = planner.path_network.node_attributes(node, ["x", "y", "z"])
                 if envelope.point_inside(x, y, z):
                     reachable_pos.append(pos)
             if len(reachable_pos) == 0:
@@ -84,14 +94,16 @@ class Map2d:
     
 
     def divide(self, planner, envelope):
-        # divide segments according to closer position
+        """divide segments according to closer position"""
+        # find positions
         reach, others = self.pos_by_path(planner, envelope)
         positions = {}
         for pos in reach.keys():
             positions[pos] = []
         
-        for node in planner.network.nodes():
-            [node_x, node_y] = planner.network.node_attributes(node, ["x", "y"])
+        # find closest position for each node
+        for node in planner.path_network.nodes():
+            [node_x, node_y] = planner.path_network.node_attributes(node, ["x", "y"])
             distances = []
             for pos in positions.keys():
                 [pos_x, pos_y] = self.network.node_attributes(pos, ["x", "y"])
@@ -106,15 +118,17 @@ class Map2d:
 
 
 class Map2d_optimized(Map2d):
-    # adding a finder grid of positions to the given network of positions at a given position with a given resolution (dist/3)    
+    """optimized version of Map2d"""   
     def add_to_network(self, pos, envelope, dist=None):
+        """adding a finder grid of positions to the given network of positions at a given position with a given resolution (dist/3) """
         [pos_x, pos_y] = self.network.node_attributes(pos, ["x", "y"])
         number_p = 9
         size = int(math.sqrt(number_p))
         if dist == None:
             dist = self.resolution
         new_res = dist/size
-        # print("resolution: ", new_res, size)
+        
+        # create new positions if inside defined floor space
         new_positions = []
         index = self.network.number_of_nodes() + 1
         for i in range(size):
@@ -168,15 +182,16 @@ class Map2d_optimized(Map2d):
         return new_positions
     
 
-    # finding the the ideal position out of an envelope of positions from all positions and from a given starting node
     def pos_by_path_limited(self, planner, envelope, reachability_map, kd, current_pos, start_node, pos_list, dist=None, ri_calc="linear", ri_threshold=0):
+        """check if nodes can be added due to the additional positions added to the network (refinement step)"""
         start_pos = self.network.number_of_nodes()
+        # add new positions to network
         self.add_to_network(current_pos, envelope, dist)
         positions = list(self.network.nodes())
         reachable_points = []
         # run is used to skip until the start node for this section of the path
         run = False
-        for node in planner.network.path:
+        for node in planner.path_network.path:
             if node == start_node:
                 run = True
             if not run:
@@ -186,7 +201,8 @@ class Map2d_optimized(Map2d):
             for pos in positions:
                 if pos > start_pos:
                     [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
-                    [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
+                    [x, y, z] = planner.path_network.node_attributes(node, ["x", "y", "z"])
+                    # get reachability index
                     if ri_calc == "linear":
                         ri = self.linear_reach(envelope, x, y, z)
                     else:
@@ -196,7 +212,6 @@ class Map2d_optimized(Map2d):
                     if inside and ri > ri_threshold:
                         reachable_pos.append(pos)
                     elif inside and ri <= ri_threshold:
-                        # wrong, checks for wrong node
                         if self.check_pose(node, reachability_map, kd, envelope):
                             reachable_pos.append(pos)
 
@@ -213,8 +228,8 @@ class Map2d_optimized(Map2d):
         return positions[0], reachable_points, pos_list
     
 
-    # optimizing the position from a given position by adding a finder grid of positions around the given position
     def optimize_pos(self, planner, envelope, reachability_map, kd, ideal_pos, reachable_points, pos_list, loops=3):
+        """optimizing the position with limited amount of refinement steps"""
         for i in range(loops):
             if i > 0:
                 res = self.resolution/(i*3)
@@ -233,8 +248,8 @@ class Map2d_optimized(Map2d):
         return ideal_pos, reachable_points, pos_list
     
 
-    # finding the ideal positions to print as much as possible of the continous path
     def pos_by_path(self, planner, envelope, reachability_map=None, ri_calc="linear", ri_threshold=0):
+        """finding the ideal positions to print as much as possible of the continous path"""
         reach = {}
         positions = list(self.network.nodes())
         positions_list = {"start": positions}
@@ -246,12 +261,12 @@ class Map2d_optimized(Map2d):
         # run is used to skip the nodes after the optimization
         run = True
         last_node = 0
-        for node in planner.network.path:
+        for node in planner.path_network.path:
             # print(run, node, last_node)
-            if planner.network.path.index(node) == planner.network.path.index(last_node) and node > 0:
+            if planner.path_network.path.index(node) == planner.path_network.path.index(last_node) and node > 0:
                 run = True
                 continue
-            elif planner.network.path.index(node) > planner.network.path.index(last_node) and not run:
+            elif planner.path_network.path.index(node) > planner.path_network.path.index(last_node) and not run:
                 print("Node advanced too far")
                 run = True
             elif not run:
@@ -260,7 +275,8 @@ class Map2d_optimized(Map2d):
             # looping over the positions from which the previous nodes were reachable and appending them to the next iteration if current node is also reachable
             for pos in positions:
                 [envelope.x, envelope.y] = self.network.node_attributes(pos, ["x", "y"])
-                [x, y, z] = planner.network.node_attributes(node, ["x", "y", "z"])
+                [x, y, z] = planner.path_network.node_attributes(node, ["x", "y", "z"])
+                # get reachability index
                 if ri_calc == "linear":
                     ri = self.linear_reach(envelope, x, y, z)
                 else:
@@ -274,7 +290,7 @@ class Map2d_optimized(Map2d):
                     if self.check_pose(node, reachability_map, kd, envelope):
                         reachable_pos.append(pos)
 
-
+            # if no position is reachable from the current node, optimize the previous position or return the previous position if max refinement step is reached
             if len(reachable_pos) == 0:
                 ideal_pos, reachable_points, positions_list_opt = self.optimize_pos(planner, envelope, reachability_map, kd, positions[0], reachable_points, positions_list)
                 print("old: " + str(positions[0]) + " opt: " + str(ideal_pos))
@@ -285,13 +301,13 @@ class Map2d_optimized(Map2d):
                 positions_list = positions_list_opt
                 
                 # check if final node is reached
-                if planner.network.path.index(reachable_points[-1])+1 == len(planner.network.path):
+                if planner.path_network.path.index(reachable_points[-1])+1 == len(planner.path_network.path):
                     print("last node: ", last_node, reachable_points[-1])
                     last_node = reachable_points[-1]
                     run = False
                     return reach, positions, positions_list
                 # check if advancement was made through optimization and jump to that node
-                elif node != planner.network.path[planner.network.path.index(reachable_points[-1])+1]:
+                elif node != planner.path_network.path[planner.path_network.path.index(reachable_points[-1])+1]:
                     print("last node: ", last_node, reachable_points[-1])
                     last_node = reachable_points[-1]
                     run = False
@@ -317,6 +333,7 @@ class Map2d_optimized(Map2d):
     
 
     def reachability(self, reachability_map, kd, pos_x, pos_y, node_x, node_y, node_z):
+        """calculates the reachability index of a node from a position with ROS reachability map"""
         # trans = Translation.from_vector(Vector(pos_x, pos_y, 0))
         # cloud = Point.transformed_collection(reachability_map.points, trans)
         # kd = KDTree(reachability_map.points)
@@ -328,6 +345,7 @@ class Map2d_optimized(Map2d):
         
 
     def linear_reach(self, envelope, node_x, node_y, node_z):
+        """calculates the reachability index of a node from a position with linear reachability"""
         if node_z > envelope.h_out+envelope.z:
             d = math.sqrt((node_x-envelope.x)**2 + (node_y-envelope.y)**2 + (node_z-envelope.h_out-envelope.z)**2)
         elif node_z < envelope.z:
@@ -347,25 +365,28 @@ class Map2d_optimized(Map2d):
     
 
     def check_pose(self, node, reachability_map, kd, envelope):
+        """checks if pose is inside reachability map plus 45 degree"""
         normal = self.wall.mesh.vertex_normal(node)
         node_x, node_y, node_z = self.wall.mesh.vertex_coordinates(node)
         p, k, dist = kd.nearest_neighbor(Point(node_x-envelope.x, node_y-envelope.y, node_z))
         poses = reachability_map.spheres[k].poses
         for pose in poses:
-            # check if angle between normals is less than 20 degree
+            # check if angle between normals is less than 45 degree
             angle = pose.normal.angle(normal)*180/math.pi
             if angle < 45:
                 return True
         return False
         
-    # returns pose at that node   
+
     def pose(self, node, planner, flip=False):
-        normal = planner.network.node_attributes(node, ['vx', 'vy', 'vz'])
-        x, y, z = planner.network.node_coordinates(node)
+        """returns pose at that node"""
+        normal = planner.path_network.node_attributes(node, ['vx', 'vy', 'vz'])
+        x, y, z = planner.path_network.node_coordinates(node)
         return Frame.from_plane(Plane(Point(x, y, z), normal))
     
-    # returns poses of all nodes that are poses ordered along the path
+
     def poses(self, network, pos):
+        """returns poses of all nodes that are poses ordered along the path"""
         # if pos is on other side flip normals
         flip = False
         if pos.Y < network.node_attribute(network.path[0], "y"):
@@ -377,6 +398,7 @@ class Map2d_optimized(Map2d):
         return frames
     
     def set_node_frame(self, network, node, flip):
+        """sets the frame of a node"""
         norm = Vector.from_data(network.node_attributes(key=node, names=['vx','vy','vz']))
         if flip:
             norm = norm.inverted()
@@ -387,8 +409,10 @@ class Map2d_optimized(Map2d):
         return frame
 
 
-class GrowthPositioning(Map2d_optimized):  
+class GrowthPositioning(Map2d_optimized):
+    """Growth algorithm for positioning together with map2d"""
     def segment(self, wall_network, envelope, max_depth=100, reachability_map=None, dynamic=False):
+        """segments the wall network with the growth algorithm"""
         self.wall_network = wall_network.copy()
         self.nodes_dict = {}
         self.reachable_nodes = []
@@ -398,9 +422,9 @@ class GrowthPositioning(Map2d_optimized):
         self.repositioning = [start]
         self.growth(start, wall_network, envelope, max_depth=max_depth, reachability_map=reachability_map)
 
+        # redo growth if wall not yet covered
         k = 0
         while len(self.reachable_nodes) < self.wall_network.number_of_nodes() and k < 10:
- 
             start = self.find_pos(Point(0, 0, self.wall.height/2), 4, dynamic)
             self.repositioning.append(start)
             self.growth(start, wall_network, envelope, max_depth=max_depth, reachability_map=reachability_map)
@@ -411,10 +435,12 @@ class GrowthPositioning(Map2d_optimized):
         return self.nodes_dict, self.reachable_nodes, self.repositioning
 
 
-    def growth(self, current, wall_network, envelope, max_depth=100, reachability_map=None):        
+    def growth(self, current, wall_network, envelope, max_depth=100, reachability_map=None):
+        """start growth algorithm from a given node""" 
         positions = list(self.network.nodes())
         self.refinement = 0
         current_positions = []
+        # check positions reaching node
         for pos in positions:
             envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
             inside = envelope.point_inside(*self.wall_network.node_coordinates(current))
@@ -427,6 +453,7 @@ class GrowthPositioning(Map2d_optimized):
     
     
     def find_pos(self, point, neighbors=4, dynamic=False):
+        """find starting position for growth algorithm"""
         # get all nodes with 3 neighbors
         candidates = list(self.wall_network.nodes_where({'number_of_neighbors': neighbors}))
         # find point closest to given point
@@ -436,7 +463,7 @@ class GrowthPositioning(Map2d_optimized):
             candidates = [candidate for candidate in candidates if candidate not in self.reachable_nodes]
         if dynamic:
             # get farthest point on x between height/2 +- 0.1
-            candidates_line = [candidate for candidate in candidates if self.wall_network.node_attribute(key=candidate, name="z") < self.wall.height/2 + 0.1 and self.wall_network.node_attribute(key=candidate, name="z") > self.wall.height/2 - 0.1]
+            candidates_line = [candidate for candidate in candidates if self.wall_network.node_attribute(key=candidate, name="z") < self.wall.height/2 + 0.075 and self.wall_network.node_attribute(key=candidate, name="z") > self.wall.height/2 + 0.025]
             if candidates_line != []:
                 x_vals = [self.wall_network.node_attribute(key=k, name="x") for k in candidates_line]
                 k = x_vals.index(min(x_vals))
@@ -450,8 +477,10 @@ class GrowthPositioning(Map2d_optimized):
 
 
     def recursive_growth(self, nodes, last_positions, envelope, max_depth=100, depth=0): 
+        """recursive growth algorithm"""
         depth += 1
         next_nodes = []
+        # iterate over nodes
         for current in nodes:   
             neighbors = self.wall_network.node_attribute(key=current, name="neighbors")
             neighbors = [neighbor for neighbor in neighbors if neighbor not in self.reachable_nodes]
@@ -465,13 +494,16 @@ class GrowthPositioning(Map2d_optimized):
                 # check if neighbor is already in reachable nodes
                 if neighbor in self.reachable_nodes or neighbor in nodes:
                     continue
+                # check positions reaching node and neighbors
                 for pos in last_positions:
                     envelope.x, envelope.y = self.network.node_attributes(pos, ["x", "y"])
                     inside = envelope.point_inside(*self.wall_network.node_coordinates(neighbor))
                     if inside:
                         neighbor_positions.append(pos)
+                # optimize position 
                 if neighbor_positions == [] and self.refinement < 4:
                     neighbor_positions = self.optimize_pos(envelope, last_positions[0])
+                # add node to reachable nodes and add positions to nodes_dict
                 if neighbor_positions != []:
                     next_nodes.append(neighbor)
                     self.reachable_nodes.append(neighbor)
@@ -479,12 +511,13 @@ class GrowthPositioning(Map2d_optimized):
                     last_positions = neighbor_positions
         
 
-
+        # if max depth not reached and there are still nodes to check, continue growth
         if depth < max_depth and next_nodes != []:
             self.recursive_growth(next_nodes, last_positions, envelope, max_depth=max_depth, depth=depth)
 
-    # optimizing the position from a given position by adding a finder grid of positions around the given position
+
     def optimize_pos(self, envelope, position):
+        """optimizing the position from a given position by adding a finer grid of positions around the given position"""
         if self.refinement > 2:
             return []
         if self.refinement == 0:
@@ -494,6 +527,8 @@ class GrowthPositioning(Map2d_optimized):
         self.refinement += 1
         # first optimization step (res = self.resolution / 3 = 0.1333)
         # second optimization step (res = self.resolution / 9 = 0.0444)
+        
+        # add positions to network
         new_pos = self.add_to_network(position, envelope, res)
         new_pos.append(position)
         for node in self.reachable_nodes[self.repositioning[-1]:]:
@@ -509,6 +544,7 @@ class GrowthPositioning(Map2d_optimized):
         return new_pos
     
     def plan_path(self, nodes, distance=0.05):
+        """horizontal zig-zag path from bottom to top inside segment"""
         # list of nodes with z below distance and in nodes
         lowest_nodes = [node for node in nodes if self.wall_network.node_attribute(key=node, name="z") < distance]
         # start equals node with min(x)

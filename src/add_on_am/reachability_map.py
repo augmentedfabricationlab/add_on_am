@@ -148,6 +148,7 @@ class ReachabilityMap(Data):
 
 
 class ReachabilityMap2D:
+    """Reachability map in to surface"""
     def __init__(self, spheres=[], indices=[]):
         self.spheres = spheres
         self.indices = indices
@@ -181,6 +182,7 @@ class ReachabilityMap2D:
 
 
 class Envelope:
+    """Robotic reachability envelope"""
     def __init__(self, r_out, h_out, r_in, h_in, z_offset, x=0, y=0, z=0, p=None):
         self.r_out = r_out
         self.h_out = h_out
@@ -196,12 +198,16 @@ class Envelope:
         self.y = y
         self.z = z
         self.mesh_out = None
+        self.mesh_in = None
     
     def draw_mesh(self):
+        """Draws the mesh of the envelope"""
         self.mesh_out = self.create_sphere_cylinder(self.r_out, self.h_out)
-        return self.mesh_out
+        self.mesh_in = self.create_sphere_cylinder(self.r_in, self.h_in)
+        return self.mesh_out, self.mesh_in
     
     def point_inside(self, x, y, z):
+        """Checks if a point is inside the envelope"""
         condition1 = [z > self.h_out+self.z, z < self.z]
         condition2 = {
         "cylinder": (x-self.x)**2 + (y-self.y)**2 < self.r_out**2,
@@ -231,6 +237,7 @@ class Envelope:
         return False
 
     def crvs_inside(self, crvs, whole_crv=False, curve=False):
+        """Checks if a curve is inside the envelope"""
         crvs_in = []
         crvs_out = []
         for i, points in enumerate(crvs):
@@ -250,6 +257,7 @@ class Envelope:
         return crvs_in, crvs_out
     
     def faces_inside(self, mesh):
+        """Checks if mesh faces are inside the envelope"""
         inside = []
         for i, vertex in enumerate(mesh.Vertices):
             if self.point_inside(vertex.X, vertex.Y, vertex.Z):
@@ -257,6 +265,7 @@ class Envelope:
         return mesh.DuplicateMesh().Faces.ExtractFaces(inside)
 
     def iterate(self, crvs, base_crv):
+        """Iterate curves on the wall from left to right, chech if inside envelope"""
         [params, base_points] = base_crv.divide_by_length(0.10, True)
         curv = [[base_points[i], base_crv.curvature_at(param)] for i, param in enumerate(params)]
         points = [c.divide_by_length(0.05, False) for c in crvs]
@@ -277,6 +286,7 @@ class Envelope:
         
     
     def create_sphere_cylinder(self, r, h):
+        """Creates a mesh of a sphere and a cylinder"""
         pill = Mesh.from_shape(Sphere(Point(self.x, self.y, self.z), r))
         to_delete = []
         for face in pill.faces():

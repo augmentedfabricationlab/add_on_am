@@ -4,15 +4,14 @@ from compas.datastructures import Mesh
 from compas_rhino.geometry import RhinoMesh
 import Rhino.Geometry as rg
 
+from compas.rpc import Proxy
+
 
 class Wall(object):
-    """ Wall generator
-
-     """
+    """wall generator"""
 
     def __init__(self, width=2.0, height=2.0, elsize=0.025, x_disp=0.0, y_disp = 0.0, rotation=0.0):
-        """create a regular quad mesh from height and width and edge length in the xz-plane
-        """
+        """create a regular quad mesh from height and width and edge length in the xz-plane"""
         self.mesh = Mesh()
         self.window_vertices = []
         
@@ -52,6 +51,7 @@ class Wall(object):
 
     
     def window(self, a=(0.8, 1.2), b=(1.2, 0.8)):
+        """create a window in the wall"""
         for vertex in self.mesh.vertices():
             # get x and z coordinates from vertex
             x_val = self.mesh.vertex_attribute(vertex, name='x')
@@ -65,17 +65,18 @@ class Wall(object):
         
     
     def sin_wave(self, amp, freq, phase, value):
+        """calculate y value sine wave"""
         return(amp * math.sin(2.0 * math.pi * freq * value + phase))
 
     def undulate(self, up_amp=0.075, up_freq=2.0, up_phase=0.0, down_amp=0.075, down_freq=2.0, down_phase=0.0):
+        """undulate the mesh with sin waves"""
         self.up_amp = up_amp
         self.up_freq = up_freq
         self.up_phase = up_phase
         self.down_amp = down_amp
         self.down_freq = down_freq
         self.down_phase = down_phase
-        """undulate the mesh with sin waves
-        """
+        
         for vertex in self.mesh.vertices():
             # get x coordinate from vertex
             x_val = self.mesh.vertex_attribute(vertex, name='x')
@@ -97,6 +98,7 @@ class Wall(object):
 
     
     def zones(self, n):
+        """create foce zones on wall"""
         for i, face in enumerate(self.mesh.faces()):
             self.mesh.face_attribute(face, "tension", value=False) # reseting everything
             half = len(n) // 2
@@ -108,6 +110,7 @@ class Wall(object):
         print(len(n), i)
 
     def remesh(self):
+        """remesh the wall"""
         mesher = Remesher(self.mesh, resolution=0.05)
         mesher.add_nodes(self.z_size, self.x_size)
         mesher.shift_nodes()
@@ -115,18 +118,22 @@ class Wall(object):
         return mesher.mesh
     
     def shift_nodes_two(self, resolution=0.1, selected_nodes=[]):
+        """shift nodes for equidisant mesh"""
         mesh_dict = self.make_dict()
         inserted = []
         for j, row in enumerate(mesh_dict):
+            # loop through faces in row
             i_counter_bottom = 0
             i_counter_top = 0
             for face in row:
                 insert_ab=False
                 insert_dc=False
 
+                # get distances of edges
                 [a, b, c, d] = face["vertices"]
                 distances = [self.mesh.edge_length(a, b), self.mesh.edge_length(b, c), self.mesh.edge_length(c, d), self.mesh.edge_length(d, a)]
 
+                # if edgelength is smaller than two times the resolution shift the node
                 self.mesh.vertex_attribute(a, "i", value=self.mesh.vertex_attribute(b, "i")+i_counter_bottom)
                 if 2*resolution >= distances[0] > resolution and j==0:
                     x, y, z = self.mesh.vertex_coordinates(a)
@@ -134,7 +141,8 @@ class Wall(object):
                     scale = resolution/distances[0]
                     delta = [(nx - x)*scale, (ny - y)*scale, (nz - z)*scale]
                     self.mesh.vertex_attributes(b, ["x", "y", "z"], values=[self.mesh.vertex_attribute(a, "x") + delta[0], self.mesh.vertex_attribute(a, "y") + delta[1], self.mesh.vertex_attribute(a, "z") + delta[2]])
-                    
+                
+                # else if edgelength is bigger than two times the resolution insert a node
                 elif distances[0] > 2*resolution:
                     insert_ab=True
                     x, y, z = self.mesh.vertex_coordinates(a)
@@ -144,9 +152,10 @@ class Wall(object):
                     e = self.mesh.add_vertex(x=self.mesh.vertex_attribute(a, "x") + delta[0], y=self.mesh.vertex_attribute(a, "y") + delta[1], z=self.mesh.vertex_attribute(a, "z") + delta[2], i=self.mesh.vertex_attribute(a, "i")+1, j=self.mesh.vertex_attribute(a, "j"), glob_id=self.mesh.vertex_attribute(a, "glob_id"), x_disp=0, z_disp=0)
                     i_counter_bottom += 1
                     self.mesh.vertex_attributes(b, ["x", "y", "z"], values=[self.mesh.vertex_attribute(a, "x") + 2*delta[0], self.mesh.vertex_attribute(a, "y") + 2*delta[1], self.mesh.vertex_attribute(a, "z") + 2*delta[2]])
+                # renew counter due to inserted nodes
                 self.mesh.vertex_attribute(b, "i", value=self.mesh.vertex_attribute(b, "i")+i_counter_bottom)
             
-
+                # same for c and d
                 self.mesh.vertex_attribute(d, "i", value=self.mesh.vertex_attribute(c, "i")+i_counter_top)
                 if distances[2] > resolution:
                     factor = 1
@@ -163,6 +172,7 @@ class Wall(object):
                         i_counter_top += 1
                 self.mesh.vertex_attribute(c, "i", value=self.mesh.vertex_attribute(c, "i")+i_counter_top)
 
+                # if nodes are inserted for both edges, insert the face
                 if insert_ab and insert_dc:
                     self.mesh.delete_face(face["face"])
                     self.mesh.add_face([a, e, f, d])
@@ -174,12 +184,14 @@ class Wall(object):
         print(self.x_size*resolution)
         print([sum([face["distances"][0] for face in row]) for row in mesh_dict])
         print([sum([face["distances"][2] for face in row]) for row in mesh_dict])
+        # remove vertices that are not part of any face
         self.mesh.cull_vertices()
 
         return self.mesh, inserted
     
 
     def shift_nodes_three(self, resolution=0.1, selected_nodes=[]):
+        """shift nodes in x direction"""
         mesh_dict = self.make_dict()
         insert_grid = [[0 for _ in range(len(mesh_dict[0]))] for _ in range(len(mesh_dict))]
 
@@ -229,6 +241,7 @@ class Wall(object):
     
 
     def insert_nodes(self, mesh_dict, insert_grid, resolution=0.1):
+        """insert nodes"""
         inserted_nodes = []
         for j, row in enumerate(insert_grid):
             stored_bottom = 0
@@ -288,6 +301,7 @@ class Wall(object):
         
 
     def make_dict(self):
+        """make dict with i and j as keys"""
         old_mesh = [[] for _ in range(self.z_size-1)]
         # # find max i and j value
         # max_i = max([self.mesh.face_attribute(face, "i") for face in self.mesh.faces()])
@@ -316,8 +330,11 @@ class Wall(object):
         vertices_dict = []
         return old_mesh
 
+
 class NewWall(Wall):
+    """new wall generator with equidistant vertices"""
     def __init__(self, width=2.0, height=2.0, elsize=0.025, rotation=0.0):
+        """create a regular quad mesh from height and width and edge length in the xz-plane"""
         self.mesh = Mesh()
         self.window_vertices = []
         
@@ -339,6 +356,7 @@ class NewWall(Wall):
         self.down_phase=0.0
     
     def undulate(self, up=None, down=None):
+        """set undulation parameters, not needed, just to keep the same interface as the old wall"""
         self.up_amp = up.amp
         self.up_freq = up.freq
         self.up_phase = up.ro
@@ -348,7 +366,7 @@ class NewWall(Wall):
         
 
     def from_brep(self, inputBrep, max_edge_length=0.05, min_edge_length=0.05):
-        # Create a compas mesh from an input Brep surface
+        """Create a compas mesh from an input Brep surface"""
         par = rg.MeshingParameters()
         #par.GridMinCount = density*10
         par.MinimumEdgeLength = max_edge_length
@@ -369,12 +387,46 @@ class NewWall(Wall):
 
         # Turn into a final quad compas mesh
         meshsrf = RhinoMesh.from_geometry(brepMesh)
-        mesh = meshsrf.to_compas()
+        self.mesh = meshsrf.to_compas()
 
         return mesh
 
+    def distances(self, desired=0.05):
+        """calculate the error to the resolution"""
+        distance = []
+
+        for a, b in self.mesh.edges():
+            distance.append(self.mesh.edge_length(a, b))
+        # visited = []
+        # for face in self.mesh.faces():
+        #     visited.append(face)
+        #     f_x, f_y, f_z = self.mesh.face_center(face)
+        #     for neighbor in self.mesh.face_neighbors(face):
+        #         if neighbor not in visited:
+        #             n_x, n_y, n_z = self.mesh.face_center(neighbor)
+        #             distance.append(pow(pow(f_x-n_x, 2) + pow(f_y-n_y, 2) + pow(f_z-n_z, 2), 0.5))
+            # vertices = self.mesh.face_vertices(face)
+            # starting bottom left corner anticlockwise
+            # [a, b, c, d] = vertices
+            # # relevant only index 0 and 2
+            # distance += [self.mesh.edge_length(a, b), self.mesh.edge_length(b, c), self.mesh.edge_length(c, d), self.mesh.edge_length(d, a)]
+            # *self.mae(distance, desired)/desired
+        return 100*self.mae(distance, desired)/desired, 100*abs(max(distance)-desired)/desired, 100*abs(min(distance)-desired)/desired, distance
+
+    def mae(self, lst, desired):
+        """calculate the mean absolute error"""
+        l = len(lst)
+        np = Proxy("numpy")
+        goal, predictor = np.repeat(desired, l), np.array(lst)
+        diff = np.subtract(goal, predictor)
+        diff = np.abs(diff)
+        mean = np.mean(diff, axis=0)
+        #print(np.shape(goal), np.shape(predictor))
+        return mean
+
 
 class NewMesher:
+    """decapricated, use the NewWall class instead"""""
     def __init__(self, mesh, resolution=0.05):
         self.distances = {}
         self.mesh = mesh
@@ -482,8 +534,8 @@ class NewMesher:
             
             
 
-
 class Remesher:
+    """decapricated; use NewMesh instead"""
     def __init__(self, mesh, resolution=0.05):
         self.distances = {}
         self.mesh = mesh
