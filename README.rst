@@ -16,37 +16,43 @@ add_on_am: Add-On AM
 
 .. Write project description
 
-**Computational design for extrusion-based add-on Additive Manufacturing onto 3D sur-face geometries using a mobile robot for construction** ...
+**Mobile robot task structuring for extrusion-based AM onto 3D surface geometries in construction environments** ...
 
 
 Main features
 -------------
 
-* feature
-* feature
-* more features
+* Buckling analysis of a wall geometry using Karamba3D and Kiwi3D!.
+* Position finding and segmentation of a wall with a recursive growth algorithm.
+* Position finding and segmentation of a wall based on a path generated with the Lowest-Axis-Path method.
+* Position finding and segmentation of a wall based on a path generated with the heat method.
+* Simulation of the robot reaching path nodes from the found positions.
 
-**add_on_am** runs on Python x.x and x.x.
+**add_on_am** runs on Rhino3D 7, with Grasshopper and IronPython 2.7 and compas 1.17.5 and compas_fab 0.28.0.
 
 
 Documentation
 -------------
 
-.. Explain how to access documentation: API, examples, etc.
+Open the respective file in Grasshopper and run it.
 
-..
-.. optional sections:
+For more detail see the thesis file.
 
 Requirements
 ------------
 
-.. Write requirements instructions here
+Rhino3D 7
 
+compas==1.17.5
+
+compas_fab==0.28.0
+
+ur_fabrication_control
 
 Installation
 ------------
 
-.. Write installation instructions here
+See installation https://augmentedfabricationlab.github.io/workshop_aaec_revamp//getting_started/
 
 
 Contributing
@@ -76,15 +82,6 @@ command line to ease recurring operations:
 
 For more details, check the `Contributor's Guide <CONTRIBUTING.rst>`_.
 
-
-Releasing this project
-----------------------
-
-.. Write releasing instructions here
-
-
-.. end of optional sections
-..
 
 Credits
 -------------
