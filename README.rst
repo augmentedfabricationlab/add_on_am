@@ -36,9 +36,13 @@ Documentation
 -------------
 
 Open the respective file in Grasshopper and run it.
+
 The Rhino folder contains the main files that are discussed during the results in the thesis.
+
 The subdirectory stability contains the Grasshopper files for non-linear analysis and eigenvalue/mode analysis of the geometry.
+
 The simulation subdirectory contains the files for simulation of the Path. For the Simulation, the docker container from the mobile_robot_control repository must be started before opening the file. Then the robot model can be loaded from there.
+
 segmentation_others contains the segmentation methods, that are presented in the Chapter methods of the thesis, but are not in detail discussed during the results.
 
 
