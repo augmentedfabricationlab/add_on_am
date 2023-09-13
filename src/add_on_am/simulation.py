@@ -76,7 +76,7 @@ class Simulation:
             # if solution found, set configuration to solution with smallest difference to previous configuration
             if joint_configs and ik == "analytics":
                 # get sum of differences between configs and start config
-                delta_configs = [sum([abs(joint_config[i] - prev_config.joint_values[i]) for i in range(len(joint_config))]) for joint_config in joint_configs]
+                delta_configs = [sum([joint_config[i] - prev_config.joint_values[i] for i in range(len(joint_config))]) for joint_config in joint_configs]
                 idx = delta_configs.index(min(delta_configs))
                 configuration = Configuration.from_prismatic_and_revolute_values([self.robot.lift_height], joint_configs[idx])
             
