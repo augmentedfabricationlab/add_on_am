@@ -67,6 +67,8 @@ ur_fabrication_control
 
 mobile_robot_control
 
+mobile_part_based_am
+
 Installation
 ------------
 
