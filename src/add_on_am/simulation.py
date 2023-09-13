@@ -22,7 +22,7 @@ class Simulation:
         self.group = group
 
     
-    def check_path(self):
+    def check_path(self, ik="analytics"):
         """check if path is reachable by robot"""
 
         not_reachable = []
@@ -39,7 +39,16 @@ class Simulation:
             frame_WCS = Frame(plane.Origin, plane.XAxis, plane.YAxis)
             self.set_lift_height(plane.Origin[2])
             frame = frame_WCS.transformed(T)
-            joint_configs = self.analytics_inverse(frame)
+
+            if ik == "ros":    
+                configuration, fail = self.compute_ik(frame, prev_config)
+                if fail:
+                    joint_configs = False
+                else:
+                    joint_configs = [configuration.joint_values]
+
+            elif ik == "analytics":
+                joint_configs = self.analytics_inverse(frame)
             
             # get rotation parameters
             robot_normal = Vector.from_start_end(self.robot.RCF.point, frame.point)
@@ -54,23 +63,30 @@ class Simulation:
             while not joint_configs and counter <= 5:
                 counter += 1
                 frame.transform(Rotation.from_axis_and_angle(axis, phi*counter/5, frame.point))
-                joint_configs = self.analytics_inverse(frame)
+                if ik == "ros":    
+                    configuration, fail = self.compute_ik(frame, prev_config)
+                    if fail:
+                        joint_configs = False
+                    else:
+                        joint_configs = [configuration.joint_values]
+                elif ik == "analytics":
+                    joint_configs = self.analytics_inverse(frame)
                 rotated.append(draw_frame(frame))
             
             # if solution found, set configuration to solution with smallest difference to previous configuration
-            if joint_configs:
+            if joint_configs and ik == "analytics":
                 # get sum of differences between configs and start config
                 delta_configs = [sum([abs(joint_config[i] - prev_config.joint_values[i]) for i in range(len(joint_config))]) for joint_config in joint_configs]
                 idx = delta_configs.index(min(delta_configs))
                 configuration = Configuration.from_prismatic_and_revolute_values([self.robot.lift_height], joint_configs[idx])
             
+            elif joint_configs and ik == "ros":
+                pass
+
             # if no solution found, set configuration to previous configuration
             else:
                 not_reachable.append(plane)
                 configuration = prev_config
-                # configuration, fail = self.compute_ik(frame, prev_config)
-                # if fail:
-                #     not_reachable.append(plane)
             
             configurations.append(configuration)
             # print(configuration.joint_values)

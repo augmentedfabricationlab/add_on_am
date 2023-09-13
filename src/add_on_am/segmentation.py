@@ -385,7 +385,7 @@ class Map2d_optimized(Map2d):
         return Frame.from_plane(Plane(Point(x, y, z), normal))
     
 
-    def poses(self, network, pos):
+    def poses(self, network, pos, nodes=[]):
         """returns poses of all nodes that are poses ordered along the path"""
         # if pos is on other side flip normals
         flip = False
@@ -393,7 +393,9 @@ class Map2d_optimized(Map2d):
             flip = True
 
         frames = []
-        for node in network.path:
+        if nodes == []:
+            nodes = list(network.path)
+        for node in nodes:
             frames.append(self.set_node_frame(network, node, flip))        
         return frames
     

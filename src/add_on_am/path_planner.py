@@ -61,7 +61,7 @@ class SurfacePathPlanner():
         vertices = self.mesh.face_vertices(key)
         # center = self.face_center(key)
         vtx_colors = [self.mesh.vertex_attributes(vertex, ["c"])[0] for vertex in vertices]
-        print(vtx_colors)
+        # print(vtx_colors)
         return Color(1,1,1)
         if None in vtx_colors:
             return Color(1,1,1)
@@ -186,7 +186,7 @@ class SurfacePathPlanner():
         #     func = None
 
         nodes = list(self.path_network.nodes_where(conditions))
-        print(len(nodes))
+        # print(len(nodes))
         if nodes != []:
             vals = [self.path_network.node_attribute(key=k, name=attr_dict['orientation']) for k in nodes]
             # print(vals)
@@ -665,10 +665,33 @@ class PathPosPlanner(SurfacePathPlanner):
         t = 0
         if self.envelope.r_in < d < self.envelope.r_out:
             s_max = self.envelope.r_out - self.envelope.r_in
-            s = 2*abs(d - self.envelope.r_in - s_max/2)/s_max
-            t = 1 - s
+            # s = 2*abs(d - self.envelope.r_in - s_max/2)/s_max
+            # t = 1 - s
+            if d-self.envelope.r_in < s_max/2:
+                t = 2*(d - self.envelope.r_in)/s_max
+            else:
+                t = 2*(self.envelope.r_out - d)/s_max
             
         return 100*t
+
+    # def linear_reach(self, node_x, node_y, node_z):
+    #     """calculates the reachability index of a node from a position with linear reachability"""
+    #     if node_z > self.envelope.h_out+self.envelope.z:
+    #         d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2 + (node_z-self.envelope.h_out-self.envelope.z)**2)
+    #     elif node_z < self.envelope.z:
+    #         d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2 + (node_z-self.envelope.z)**2)
+    #     else:
+    #         d = math.sqrt((node_x-self.envelope.x)**2 + (node_y-self.envelope.y)**2)
+
+    #     linear_out = 0
+    #     linear_in = 0
+    #     if d < self.envelope.r_out:
+    #         linear_out = (1 - d/self.envelope.r_out) * 50
+    #     if d > self.envelope.r_in and d < 2*self.envelope.r_in:
+    #         linear_in = (d/self.envelope.r_in - 1) * 50
+    #     elif d > 2*self.envelope.r_in:
+    #         linear_in = 50
+    #     return linear_out + linear_in
     
 
     def check_pose(self, node, reachability_map, kd, envelope):
@@ -732,6 +755,7 @@ class PathPosPlanner(SurfacePathPlanner):
             raise ValueError
 
         n = 0 # Number of interruptions        
+        # Getting the starting point
         current = self.get_node(number_of_neighbors=2, orientation="z", func=2, idx=1)
         if pos == None:
             pos_set = False
@@ -744,11 +768,9 @@ class PathPosPlanner(SurfacePathPlanner):
         direction = "x"
         reverse = False
                     
-        # Getting the starting point
         print(current)
         # Path finding process
         for face in self.mesh.faces():
-            # Look for the neighbor with the lowest x/y/z
             if type(positions) == list:
                 print("number: " + str(len(positions)))
             else:
@@ -762,7 +784,7 @@ class PathPosPlanner(SurfacePathPlanner):
                 if len(self.path_network.connected_edges(key=i))!=0:
                     continue
                 [x, y, z] = self.path_network.node_attributes(i, ["x", "y", "z"])
-                # if pos is set, check if the node is inside the envelope
+                # if pos is set, check if the neighbor is inside the envelope
                 if pos_set:
                     inside = self.envelope.point_inside(x, y, z)
                 else:
@@ -777,12 +799,12 @@ class PathPosPlanner(SurfacePathPlanner):
             
             # If neighbors found then find the closest one based on orientation
             if neighbornodes != {}:
-                while len(neighbornodes.keys())>2:
-                    del neighbornodes[max(neighbornodes_z, key=neighbornodes_z.get)]
+                # while len(neighbornodes.keys())>2:
+                #     del neighbornodes[max(neighbornodes_z, key=neighbornodes_z.get)]
                 
                 # if only neighbor above and below are reachable, delete the one below, so it is clear that the path is going up
                 if len(neighbornodes.keys()) == 2:
-                    if abs(neighbornodes.values()[0] - neighbornodes.values()[1]) < 0.01:
+                    if abs(neighbornodes.values()[0] - neighbornodes.values()[1]) < 0.025:
                         del neighbornodes[min(neighbornodes_z, key=neighbornodes_z.get)]
 
                 print("neighbornodes: " + str(neighbornodes))
@@ -792,14 +814,20 @@ class PathPosPlanner(SurfacePathPlanner):
                 elif not reverse:
                     following = max(neighbornodes, key=neighbornodes.get)
                 # if position is not yet final use threshold to move upwards if to low
-                if not pos_set and len(positions) < len(list(self.pos_network.nodes())):
+                if not pos_set and len(positions) < len(list(self.pos_network.nodes()))-1:
                     ri_temp = []
                     x, y, z = self.path_network.node_attributes(following, ["x", "y", "z"])
+                    # new_positions = []
                     for position in positions:
                         [self.envelope.x, self.envelope.y] = self.pos_network.node_attributes(position, ["x", "y"])
-                        ri_temp.append(self.linear_reach(x, y, z))
+                    #     if self.linear_reach(x, y, z) > min_ri:
+                    #         new_positions.append(position)
+                    # positions = new_positions
+                        ri = self.linear_reach(x, y, z)
+                        ri_temp.append(ri)
+                    print("positions and ri: " + str(positions) + "  " + str(ri_temp))
                     # print("average_ri: " + str(sum(ri_temp)/len(ri_temp)), "min_ri: " + str(min(ri_temp)), "max_ri: " + str(max(ri_temp)))
-                    if min(ri_temp) < min_ri:
+                    if sum(ri_temp)/len(ri_temp) < min_ri:
                         following = max(neighbornodes_z, key=neighbornodes_z.get)
                         print("upwards")
                     
